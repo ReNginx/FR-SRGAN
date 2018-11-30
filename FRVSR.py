@@ -3,11 +3,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 
+# an naive implementation of CVPR paper 'Frame-Recurrent Video Super-Resolution' https://arxiv.org/abs/1801.04590
+
 class ResBlock(nn.Module):
     def __init__(self, conv_dim):
         super(ResBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim,
+                               kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim,
+                               kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         out = self.conv1(x)
@@ -19,8 +23,10 @@ class ResBlock(nn.Module):
 class ConvLeaky(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(ConvLeaky, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_dim, out_channels=out_dim, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=out_dim, out_channels=out_dim, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=in_dim, out_channels=out_dim,
+                               kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=out_dim, out_channels=out_dim,
+                               kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         out = self.conv1(x)
@@ -50,8 +56,10 @@ class SRNet(nn.Module):
         super(SRNet, self).__init__()
         self.inputConv = nn.Conv2d(in_channels=in_dim, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.ResBlocks = nn.Sequential(*[ResBlock(64) for i in range(10)])
-        self.deconv1 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv2 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.deconv1 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3,
+                                          stride=2, padding=1, output_padding=1)
+        self.deconv2 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3,
+                                          stride=2, padding=1, output_padding=1)
         self.outputConv = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
@@ -73,7 +81,8 @@ class FNet(nn.Module):
         self.convBinl1 = FNetBlock(128, 256, typ="bilinear")
         self.convBinl2 = FNetBlock(256, 128, typ="bilinear")
         self.convBinl3 = FNetBlock(128, 64, typ="bilinear")
-        self.seq = nn.Sequential(self.convPool1, self.convPool2, self.convPool3, self.convBinl1, self.convBinl2, self.convBinl3)
+        self.seq = nn.Sequential(self.convPool1, self.convPool2, self.convPool3,
+                                 self.convBinl1, self.convBinl2, self.convBinl3)
         self.conv1 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=2, kernel_size=3, stride=1, padding=1)
 
@@ -85,7 +94,7 @@ class FNet(nn.Module):
         out = func.tanh(out)
         return out
 
-# please ensure that input is (batch_size, depth, hegiht, width)
+# please ensure that input is (batch_size, depth, height, width)
 # courtesy to Hung Nguyen at https://gist.github.com/jalola/f41278bb27447bed9cd3fb48ec142aec.
 class SpaceToDepth(nn.Module):
     def __init__(self, block_size):
@@ -136,6 +145,7 @@ class FRVSR(nn.Module):
         self.lastEstImg = estImg
         return estImg
 
+# run tests make sure that output is correct.
 class TestFRVSR(unittest.TestCase):
     def testResBlock(self):
         block = ResBlock(3)
