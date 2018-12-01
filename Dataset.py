@@ -23,8 +23,8 @@ def image_loader(path):
 
 class FRDataset(data.Dataset):
 
-    def __init__(self):
-        self.file_dir = data_dir
+    def __init__(self,dir):
+        self.file_dir = dir
         self.transform = base_transform
         #self.image_loader = image_loader()
         self.frames_set = os.listdir(self.file_dir)
@@ -51,7 +51,7 @@ class FRDataset(data.Dataset):
         return len(self.frames_set)
 
 
-FRData = FRDataset()
+FRData = FRDataset(data_dir)
 
 data_loader = data.DataLoader(FRData, batch_size = batch)
 
