@@ -13,11 +13,11 @@ class ResBlock(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim,
                                kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        out = self.conv1(x)
+    def forward(self, input):
+        out = self.conv1(input)
         out = func.relu(out)
         out = self.conv2(out)
-        out = x + out
+        out = input + out
         return out
 
 class ConvLeaky(nn.Module):
@@ -28,8 +28,8 @@ class ConvLeaky(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=out_dim, out_channels=out_dim,
                                kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        out = self.conv1(x)
+    def forward(self, input):
+        out = self.conv1(input)
         out = func.leaky_relu(out, 0.2)
         out = self.conv2(out)
         out = func.leaky_relu(out, 0.2)
@@ -46,8 +46,8 @@ class FNetBlock(nn.Module):
         else:
             raise Exception('typ does not match any of maxpool or bilinear')
 
-    def forward(self, x):
-        out = self.convleaky(x)
+    def forward(self, input):
+        out = self.convleaky(input)
         out = self.final(out)
         return out
 
@@ -62,8 +62,8 @@ class SRNet(nn.Module):
                                           stride=2, padding=1, output_padding=1)
         self.outputConv = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        out = self.inputConv(x)
+    def forward(self, input):
+        out = self.inputConv(input)
         out = self.ResBlocks(out)
         out = self.deconv1(out)
         out = func.relu(out)
@@ -86,12 +86,12 @@ class FNet(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=2, kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        out = self.seq(x)
+    def forward(self, input):
+        out = self.seq(input)
         out = self.conv1(out)
         out = func.leaky_relu(out, 0.2)
         out = self.conv2(out)
-        out = func.tanh(out)
+        out = torch.tanh(out)
         return out
 
 # please ensure that input is (batch_size, depth, height, width)
@@ -115,12 +115,14 @@ class SpaceToDepth(nn.Module):
         output = output.permute(0, 3, 1, 2)
         return output
 
+
+# please ensure that lr_height and lr_width must be a multiple of 8.
 class FRVSR(nn.Module):
-    def __init__(self, batch_size, lrHeight, lrWidth):
+    def __init__(self, batch_size, lr_height, lr_width):
         super(FRVSR, self).__init__()
         FRVSR.SRFactor = 4
-        self.width=lrWidth
-        self.height=lrHeight
+        self.width = lr_width
+        self.height = lr_height
         self.batch_size = batch_size
         self.fnet = FNet()
         self.todepth = SpaceToDepth(4)
@@ -132,16 +134,16 @@ class FRVSR(nn.Module):
         self.lastEstImg = torch.zeros([self.batch_size, 3, self.height*FRVSR.SRFactor, self.width*FRVSR.SRFactor])
 
     # x is a 4-d tensor of shape N×C×H×W
-    def forward(self, x):
-        preflow = torch.cat((x, self.lastLrImg), dim=1)
+    def forward(self, input):
+        preflow = torch.cat((input, self.lastLrImg), dim=1)
         flow = self.fnet(preflow)
         flowNCHW = func.interpolate(flow, scale_factor=4, mode="bilinear")
         flowNHWC = flowNCHW.permute(0, 2, 3, 1) # shift c to last, as grid_sample function need it.
         afterWarp = func.grid_sample(self.lastEstImg, flowNHWC)
         depthImg = self.todepth(afterWarp)
-        srInput = torch.cat((x, depthImg), dim=1)
+        srInput = torch.cat((input, depthImg), dim=1)
         estImg = self.srnet(srInput)
-        self.lastLrImg = x
+        self.lastLrImg = input
         self.lastEstImg = estImg
         return estImg
 
@@ -151,51 +153,51 @@ class TestFRVSR(unittest.TestCase):
         block = ResBlock(3)
         input = torch.rand(2,3,64,112)
         output = block(input)
-        self.assertEquals(input.shape, output.shape)
+        self.assertEqual(input.shape, output.shape)
 
     def testConvLeaky(self):
         block = ConvLeaky(3, 32)
         input = torch.rand(2,3,64,112)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2,32,64,112).shape)
+        self.assertEqual(output.shape, torch.empty(2, 32, 64, 112).shape)
 
     def testFNetBlockMaxPool(self):
         block = FNetBlock(3, 32, "maxpool")
         input = torch.rand(2,3,64,112)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2, 32, 32, 56).shape)
+        self.assertEqual(output.shape, torch.empty(2, 32, 32, 56).shape)
 
     def testFNetBlockInterPolate(self):
         block = FNetBlock(3, 32, "bilinear")
         input = torch.rand(2,3, 32, 56)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2, 32, 64,112).shape)
+        self.assertEqual(output.shape, torch.empty(2, 32, 64, 112).shape)
 
     def testSRNet(self):
         block = SRNet()
         input = torch.rand(2, 51, 32, 56)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2, 3, 128, 224).shape)
+        self.assertEqual(output.shape, torch.empty(2, 3, 128, 224).shape)
         block = SRNet()
         input = torch.rand(2, 51, 64, 64)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2, 3, 256, 256).shape)
+        self.assertEqual(output.shape, torch.empty(2, 3, 256, 256).shape)
 
     def testFNet(self):
         block = FNet()
         input = torch.rand(2, 6, 32, 56)
         output = block(input)
-        self.assertEquals(output.shape, torch.empty(2, 2, 32, 56).shape)
+        self.assertEqual(output.shape, torch.empty(2, 2, 32, 56).shape)
 
     def testFRVSR(self):
-        H = 16
-        W = 16
+        H = 56
+        W = 56
         block = FRVSR(4, H, W)
         input = torch.rand(7, 4, 3, H, W)
         block.init_hidden()
         for batch_frames in input:
             output = block(batch_frames)
-            self.assertEquals(output.shape, torch.empty(4, 3, H*4, W*4).shape)
+            self.assertEqual(output.shape, torch.empty(4, 3, H * 4, W * 4).shape)
 
 if __name__ == '__main__':
     unittest.main()
