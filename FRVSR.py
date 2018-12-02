@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 
+
 # an naive implementation of CVPR paper 'Frame-Recurrent Video Super-Resolution' https://arxiv.org/abs/1801.04590
 
 class ResBlock(nn.Module):
@@ -20,6 +21,7 @@ class ResBlock(nn.Module):
         out = input + out
         return out
 
+
 class ConvLeaky(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(ConvLeaky, self).__init__()
@@ -34,6 +36,7 @@ class ConvLeaky(nn.Module):
         out = self.conv2(out)
         out = func.leaky_relu(out, 0.2)
         return out
+
 
 class FNetBlock(nn.Module):
     def __init__(self, in_dim, out_dim, typ):
@@ -50,6 +53,7 @@ class FNetBlock(nn.Module):
         out = self.convleaky(input)
         out = self.final(out)
         return out
+
 
 class SRNet(nn.Module):
     def __init__(self, in_dim=51):
@@ -71,6 +75,7 @@ class SRNet(nn.Module):
         out = func.relu(out)
         out = self.outputConv(out)
         return out
+
 
 class FNet(nn.Module):
     def __init__(self, in_dim=6):
@@ -94,13 +99,14 @@ class FNet(nn.Module):
         out = torch.tanh(out)
         return out
 
+
 # please ensure that input is (batch_size, depth, height, width)
 # courtesy to Hung Nguyen at https://gist.github.com/jalola/f41278bb27447bed9cd3fb48ec142aec.
 class SpaceToDepth(nn.Module):
     def __init__(self, block_size):
         super(SpaceToDepth, self).__init__()
         self.block_size = block_size
-        self.block_size_sq = block_size*block_size
+        self.block_size_sq = block_size * block_size
 
     def forward(self, input):
         output = input.permute(0, 2, 3, 1)
@@ -131,45 +137,58 @@ class FRVSR(nn.Module):
     # make sure to call this before every batch train.
     def init_hidden(self):
         self.lastLrImg = torch.zeros([self.batch_size, 3, self.height, self.width])
-        self.lastEstImg = torch.zeros([self.batch_size, 3, self.height*FRVSR.SRFactor, self.width*FRVSR.SRFactor])
+        self.EstHrImg = torch.zeros([self.batch_size, 3, self.height * FRVSR.SRFactor, self.width * FRVSR.SRFactor])
 
     # x is a 4-d tensor of shape N×C×H×W
     def forward(self, input):
+        # print(f'input.shape is {input.shape}, lastImg shape is {self.lastLrImg.shape}')
         preflow = torch.cat((input, self.lastLrImg), dim=1)
         flow = self.fnet(preflow)
+        self.EstLrImg = func.grid_sample(self.lastLrImg, flow.permute(0, 2, 3, 1))
         flowNCHW = func.interpolate(flow, scale_factor=4, mode="bilinear")
-        flowNHWC = flowNCHW.permute(0, 2, 3, 1) # shift c to last, as grid_sample function need it.
-        afterWarp = func.grid_sample(self.lastEstImg, flowNHWC)
+        flowNHWC = flowNCHW.permute(0, 2, 3, 1)  # shift c to last, as grid_sample function need it.
+        afterWarp = func.grid_sample(self.EstHrImg, flowNHWC)
         depthImg = self.todepth(afterWarp)
         srInput = torch.cat((input, depthImg), dim=1)
         estImg = self.srnet(srInput)
         self.lastLrImg = input
-        self.lastEstImg = estImg
-        return estImg
+        self.EstHrImg = estImg
+        return self.EstHrImg, self.EstLrImg
+
+
+# class FRVSR_Criterion(torch.autograd.Function):
+#     def __init__(self):
+#         super(FRVSR_Criterion, self).__init__()
+#
+#     def forward(self, lr_est, lr_img, hr_est, hr_img):
+#         #= input[0], input[1], input[2], input[3]
+#         assert (lr_est.shape == lr_img.shape)
+#         assert (hr_est.shape == hr_img.shape)
+#         return nn.MSELoss(lr_est, lr_img) + nn.MSELoss(hr_est, hr_img)
 
 # run tests make sure that output is correct.
 class TestFRVSR(unittest.TestCase):
     def testResBlock(self):
         block = ResBlock(3)
-        input = torch.rand(2,3,64,112)
+        input = torch.rand(2, 3, 64, 112)
         output = block(input)
         self.assertEqual(input.shape, output.shape)
 
     def testConvLeaky(self):
         block = ConvLeaky(3, 32)
-        input = torch.rand(2,3,64,112)
+        input = torch.rand(2, 3, 64, 112)
         output = block(input)
         self.assertEqual(output.shape, torch.empty(2, 32, 64, 112).shape)
 
     def testFNetBlockMaxPool(self):
         block = FNetBlock(3, 32, "maxpool")
-        input = torch.rand(2,3,64,112)
+        input = torch.rand(2, 3, 64, 112)
         output = block(input)
         self.assertEqual(output.shape, torch.empty(2, 32, 32, 56).shape)
 
     def testFNetBlockInterPolate(self):
         block = FNetBlock(3, 32, "bilinear")
-        input = torch.rand(2,3, 32, 56)
+        input = torch.rand(2, 3, 32, 56)
         output = block(input)
         self.assertEqual(output.shape, torch.empty(2, 32, 64, 112).shape)
 
@@ -190,14 +209,24 @@ class TestFRVSR(unittest.TestCase):
         self.assertEqual(output.shape, torch.empty(2, 2, 32, 56).shape)
 
     def testFRVSR(self):
-        H = 56
-        W = 56
+        H = 16
+        W = 16
         block = FRVSR(4, H, W)
         input = torch.rand(7, 4, 3, H, W)
         block.init_hidden()
         for batch_frames in input:
-            output = block(batch_frames)
-            self.assertEqual(output.shape, torch.empty(4, 3, H * 4, W * 4).shape)
+            output1, output2 = block(batch_frames)
+            self.assertEqual(output1.shape, torch.empty(4, 3, H * 4, W * 4).shape)
+            self.assertEqual(output2.shape, torch.empty(4, 3, H, W).shape)
+
+    # def testCriterion(self):
+    #     H = 16
+    #     W = 16
+    #     input = torch.rand(7, 4, 3, H, W)
+    #     output = torch.rand(4, 3, H * 4, W * 4)
+    #     criterion = FRVSR_Criterion()
+    #     self.assertIsInstance(criterion(input, input, output, output), type(0.1))
+
 
 if __name__ == '__main__':
     unittest.main()

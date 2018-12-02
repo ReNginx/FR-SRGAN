@@ -1,4 +1,4 @@
-# Dataset downloaded from: http://data.csail.mit.edu/tofu/testset/vimeo_test_clean.zip
+# Dataset downloaded from: http://data.csail.mit.edu/tofu/testset/vimeo_super_resolution_test.zip
 # After that, run this code for LR and HR seperately to form a sorted data folder for convenience
 # You might find helpful: how to detract the .DS_Store
 # https://macpaw.com/how-to/remove-ds-store-files-on-mac
@@ -6,7 +6,13 @@
 import os, sys, shutil
 
 #source_folder = "Data/vimeo_super_resolution_test/low_resolution"
-source_folder = "Data/vimeo_super_resolution_test/input"
+source_folder = "/Users/hanxiangren/Program/6.819/finalProject/FR-SRGAN/Data/vimeo_test_clean/sequences/"
+
+if os.path.exists(source_folder + ".DS_Store"):
+    os.remove(source_folder + ".DS_Store")
+else:
+    print(".DS_Store does not exist")
+
 video_list = os.listdir(source_folder)
 video_list.sort()
 #print(video_list)
@@ -28,6 +34,6 @@ for video in video_list:
         des = "Data/HR/" + str(new_frames_name)
         #des = "Data/LR/" + str(new_frames_name)
         print(des)
-        shutil.move(frames_path, des)
+        shutil.copy(frames_path, des)
 
 #Totally, we have 7824 frames-file for training
