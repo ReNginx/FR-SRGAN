@@ -155,6 +155,14 @@ class FRVSR(nn.Module):
         self.EstHrImg = estImg
         return self.EstHrImg, self.EstLrImg
 
+    def set_param(self, **kwargs):
+        for (key, val) in kwargs.items():
+            if key == 'batch_size':
+                self.batch_size = val
+            if key == 'height':
+                self.height = val
+            if key == 'width':
+                self.width = val
 
 # class FRVSR_Criterion(torch.autograd.Function):
 #     def __init__(self):
