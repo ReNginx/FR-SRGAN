@@ -23,7 +23,7 @@ def load_model(model_name, width, height):
 def run():
     # Parameters
     num_epochs = 20
-    output_period = 10
+    output_period = 2
     batch_size = 4
     width, height = 112, 64
 
@@ -53,14 +53,16 @@ def run():
             # print(f'hrimgs.shape is {hr_imgs.shape}')
             # print(f'lrimgs.shape is {lr_imgs.shape}')
             optimizer.zero_grad()
-            model.init_hidden()
+            model.init_hidden(device)
             loss = 0
 
             for lr_img, hr_img in zip(lr_imgs, hr_imgs):
                 # print(lr_img.shape)
                 hr_est, lr_est = model(lr_img)
-                loss += content_criterion(hr_est, hr_img)
-                loss += flow_criterion(lr_est, lr_img)
+                content_loss = content_criterion(hr_est, hr_img)
+                flow_loss = flow_criterion(lr_est, lr_img)
+                print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
+                loss += content_loss + flow_loss
 
             loss.backward()
 

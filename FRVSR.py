@@ -135,9 +135,9 @@ class FRVSR(nn.Module):
         self.srnet = SRNet()
 
     # make sure to call this before every batch train.
-    def init_hidden(self):
-        self.lastLrImg = torch.zeros([self.batch_size, 3, self.height, self.width])
-        self.EstHrImg = torch.zeros([self.batch_size, 3, self.height * FRVSR.SRFactor, self.width * FRVSR.SRFactor])
+    def init_hidden(self, device):
+        self.lastLrImg = torch.zeros([self.batch_size, 3, self.height, self.width]).to(device)
+        self.EstHrImg = torch.zeros([self.batch_size, 3, self.height * FRVSR.SRFactor, self.width * FRVSR.SRFactor]).to(device)
 
     # x is a 4-d tensor of shape N×C×H×W
     def forward(self, input):
