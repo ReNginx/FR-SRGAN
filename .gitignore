@@ -106,3 +106,8 @@ venv.bak/
 
 # .idea
 .idea/
+
+# ignore video files
+*.mov
+*.avi
+*.mp4
