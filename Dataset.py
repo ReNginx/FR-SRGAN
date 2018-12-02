@@ -3,6 +3,8 @@ from torchvision import datasets, transforms
 import torch.utils.data as data
 import os
 from PIL import Image
+import numpy as np
+from torch.utils.data.sampler import SubsetRandomSampler
 
 base_transform = transforms.Compose([
     transforms.ToTensor(),
@@ -60,17 +62,53 @@ train_dir_HR = 'Data/HR'
 FRData_LR = FRDataset(dir=train_dir_LR,weight=LR_weight,height=LR_height)
 FRData_HR = FRDataset(dir=train_dir_HR,weight=HR_weight,height=HR_height)
 
-data_loader_LR = data.DataLoader(FRData_LR, batch_size = batch, shuffle = True)
-data_loader_HR = data.DataLoader(FRData_HR, batch_size = batch, shuffle = True)
+# data_loader_LR = data.DataLoader(FRData_LR, batch_size = batch, shuffle = True)
+# data_loader_HR = data.DataLoader(FRData_HR, batch_size = batch, shuffle = True)
 
 #print(data_loader[0].size())
+shuffle_dataset = True
+random_seed = 42
+dataset_size = len(FRData_LR)
+validation_split = 0.2 # Train-Val : 8-2
+print("Total data number:",len(FRData_LR))
+indices = list(range(dataset_size))
+split = int(np.floor(validation_split * dataset_size))
+if shuffle_dataset:
+    np.random.seed(random_seed)
+    np.random.shuffle(indices)
+train_indices, val_indices = indices[split:], indices[:split]
+#print(train_indices)
+train_sampler = SubsetRandomSampler(train_indices)
+print("Train sample numbers: ",len(train_sampler))
+valid_sampler = SubsetRandomSampler(val_indices)
+print("Validation sample numbers: ",len(valid_sampler))
 
-for i_batch, sample_batched in enumerate(zip(data_loader_LR,data_loader_HR)):
+train_loader_LR = torch.utils.data.DataLoader(FRData_LR, batch_size=batch,
+                                           sampler=train_sampler)
+validation_loader_LR = torch.utils.data.DataLoader(FRData_LR, batch_size=batch,
+                                                sampler=valid_sampler)
+train_loader_HR = torch.utils.data.DataLoader(FRData_HR, batch_size=batch,
+                                           sampler=train_sampler)
+validation_loader_HR = torch.utils.data.DataLoader(FRData_HR, batch_size=batch,
+                                                sampler=valid_sampler)
+
+
+for i_batch, sample_batched in enumerate(zip(train_loader_LR,train_loader_HR)):
        #print(sample_batched)
        #print(data_loader_HR[i_batch].size())
        permuted_LR_data = sample_batched[0].permute(1, 0, 2, 3, 4)
        permuted_HR_data = sample_batched[1].permute(1, 0, 2, 3, 4) #labels
        #print(permuted_data.contiguous())
        print("LR:",permuted_LR_data.size())
-       print("HR:",permuted_LR_data.size())
+       print("HR:",permuted_HR_data.size())
 
+for j_batch, sample_batched in enumerate(zip(validation_loader_LR,validation_loader_HR)):
+       #print(sample_batched)
+       #print(data_loader_HR[i_batch].size())
+       permuted_LR_data = sample_batched[0].permute(1, 0, 2, 3, 4)
+       permuted_HR_data = sample_batched[1].permute(1, 0, 2, 3, 4) #labels
+       #print(permuted_data.contiguous())
+       print("LR:",permuted_LR_data.size())
+       print("HR:",permuted_HR_data.size())
+
+       
