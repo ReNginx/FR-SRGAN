@@ -14,11 +14,12 @@ import Dataset
 
 
 def load_model(model_name, width, height):
-    if model_name == '':
-        return FRVSR.FRVSR(4, lr_height=height, lr_width=width)
-    else:
-        raise NotImplementedError
-
+    model = FRVSR.FRVSR(4, lr_height=height, lr_width=width)
+    if model_name != '':
+        model_path = f'./models/{model_name}'
+        checkpoint = torch.load(model_path, map_location='cpu')
+        model.load_state_dict(checkpoint)
+    return model
 
 def run():
     # Parameters
@@ -29,7 +30,7 @@ def run():
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('', width, height)
+    model = load_model('FRVSR.3', width, height)
     model = model.to(device)
 
     train_loader, val_loader = Dataset.get_data_loaders(batch_size)

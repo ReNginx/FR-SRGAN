@@ -28,6 +28,7 @@ if __name__ == "__main__":
     # for cpu
     # model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage))
     model.load_state_dict(torch.load(MODEL_NAME, device))
+    model.eval()
 
     videoCapture = cv2.VideoCapture(VIDEO_NAME)
     fps = videoCapture.get(cv2.CAP_PROP_FPS)
@@ -56,6 +57,7 @@ if __name__ == "__main__":
             #     image = image.cuda()
 
             hr_out, lr_out = model(image)
+            model.init_hidden(device)
             hr_out = hr_out.cpu()
             out_img = hr_out.data[0].numpy()
             out_img *= 255.0

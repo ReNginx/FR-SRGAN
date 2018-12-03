@@ -73,7 +73,7 @@ class loader_wrapper(object):
         return len(self.loader)
 
 
-def get_data_loaders(batch):
+def get_data_loaders(batch, shuffle_dataset=True):
     # batch = 4 # batch size of the data every time for training
     # batch_number = 100000  # number of batches, so we totally have batch_number * batch images
     # HR_height = height
@@ -91,7 +91,6 @@ def get_data_loaders(batch):
     # data_loader_HR = data.DataLoader(FRData_HR, batch_size = batch, shuffle = True)
 
     # print(data_loader[0].size())
-    shuffle_dataset = True
     random_seed = 42
     dataset_size = len(FRData)
     validation_split = 0.2  # Train-Val : 8-2
