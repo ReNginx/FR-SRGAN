@@ -24,7 +24,7 @@ def load_model(model_name, width, height):
 def run():
     # Parameters
     num_epochs = 20
-    output_period = 2
+    output_period = 10
     batch_size = 4
     width, height = 112, 64
 
@@ -32,21 +32,23 @@ def run():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = load_model('FRVSR.3', width, height)
     model = model.to(device)
-
+    
+    torch.save(model.state_dict(), "models/FRVSRTest")
+    
     train_loader, val_loader = Dataset.get_data_loaders(batch_size)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
     flow_criterion = nn.MSELoss().to(device)
     content_criterion = nn.MSELoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-5)
 
     epoch = 1
     while epoch <= num_epochs:
         running_loss = 0.0
         for param_group in optimizer.param_groups:
             print('Current learning rate: ' + str(param_group['lr']))
-            model.train()
+        model.train()
 
         for batch_num, (lr_imgs, hr_imgs) in enumerate(train_loader, 1):
             lr_imgs = lr_imgs.to(device)
@@ -62,9 +64,10 @@ def run():
                 hr_est, lr_est = model(lr_img)
                 content_loss = content_criterion(hr_est, hr_img)
                 flow_loss = flow_criterion(lr_est, lr_img)
-                print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
+                #print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
                 loss += content_loss + flow_loss
 
+            #print(f'loss is {loss}')
             loss.backward()
 
             optimizer.step()
