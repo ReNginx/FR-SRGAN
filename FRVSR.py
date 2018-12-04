@@ -181,15 +181,14 @@ class FRVSR(nn.Module):
         # flow += self.lr_identity
         relative_place = flow + self.lr_identity
         # debug info goes here
-
-        self.EstLrImg = func.grid_sample(self.lastLrImg, flow.permute(0, 2, 3, 1), padding_mode='border')
+        self.EstLrImg = func.grid_sample(self.lastLrImg, relative_place.permute(0, 2, 3, 1), padding_mode='border')
         # print(self.EstLrImg)
         relative_placeNCHW = func.interpolate(relative_place, scale_factor=4, mode="bilinear")
-        # flowNCHW = torch.unsqueeze(self.hr_identity, dim=0)
+        # relative_placeNCHW = torch.unsqueeze(self.hr_identity, dim=0)
         relative_placeNWHC = relative_placeNCHW.permute(0, 2, 3,
                                                         1)  # shift c to last, as grid_sample function needs it.
         afterWarp = func.grid_sample(self.EstHrImg, relative_placeNWHC, padding_mode='border')
-        #self.afterWarp = afterWarp  # for debugging, should be removed later.
+        self.afterWarp = afterWarp  # for debugging, should be removed later.
         depthImg = self.todepth(afterWarp)
         srInput = torch.cat((input, depthImg), dim=1)
         estImg = self.srnet(srInput)
