@@ -41,7 +41,7 @@ def run():
 
     flow_criterion = nn.MSELoss().to(device)
     content_criterion = nn.MSELoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-5)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
     epoch = 1
     while epoch <= num_epochs:
