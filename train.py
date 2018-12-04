@@ -14,7 +14,7 @@ import Dataset
 
 
 def load_model(model_name, batch_size, width, height):
-    model = FRVSR.FRVSR(batch_size, lr_height=height, lr_width=width)
+    model = FRVSR.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
     if model_name != '':
         model_path = f'./models/{model_name}'
         checkpoint = torch.load(model_path, map_location='cpu')
@@ -30,7 +30,7 @@ def run():
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('', width, height, batch_size)
+    model = load_model('', batch_size, width, height)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
