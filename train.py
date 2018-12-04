@@ -59,6 +59,7 @@ def run():
             model.init_hidden(device)
             loss = 0
 
+            # lr_imgs = 7 * 4 * 3 * H * W
             for lr_img, hr_img in zip(lr_imgs, hr_imgs):
                 # print(lr_img.shape)
                 hr_est, lr_est = model(lr_img)

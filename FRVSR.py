@@ -2,8 +2,9 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
-
-
+import cv2
+import numpy as np
+from skimage import img_as_ubyte
 # an naive implementation of CVPR paper 'Frame-Recurrent Video Super-Resolution' https://arxiv.org/abs/1801.04590
 
 class ResBlock(nn.Module):
@@ -138,16 +139,56 @@ class FRVSR(nn.Module):
     def init_hidden(self, device):
         self.lastLrImg = torch.zeros([self.batch_size, 3, self.height, self.width]).to(device)
         self.EstHrImg = torch.zeros([self.batch_size, 3, self.height * FRVSR.SRFactor, self.width * FRVSR.SRFactor]).to(device)
+        height_gap = 2 / (self.height - 1)
+        width_gap = 2 / (self.width - 1)
+        height, width = torch.meshgrid([torch.range(-1, 1, height_gap), torch.range(-1, 1, width_gap)])
+        self.lr_identity = torch.stack([width, height]).to(device)
+
+        height_gap = 2 / (self.height * self.SRFactor - 1)
+        width_gap = 2 / (self.width * self.SRFactor - 1)
+        height, width = torch.meshgrid([torch.range(-1, 1, height_gap), torch.range(-1, 1, width_gap)])
+        self.hr_identity = torch.stack([width, height]).to(device)
+
+    # useless debug info
+    '''
+    prvs = img_as_ubyte(self.lastLrImg[0].permute(1,2,0).detach().numpy())
+    next = img_as_ubyte(input[0].permute(1,2,0).detach().numpy())
+    prvs = cv2.cvtColor(prvs, cv2.COLOR_BGR2GRAY)
+    next = cv2.cvtColor(next, cv2.COLOR_BGR2GRAY)
+    flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+    flow[...,0] /= flow.shape[1]
+    flow[...,1] /= flow.shape[0]
+    flow_to_use = flow
+    flow = torch.unsqueeze(torch.tensor(flow).permute(2,0,1), 0)
+    flow_len = np.expand_dims(np.sqrt((flow_to_use[..., 0] ** 2 + flow_to_use[..., 1] ** 2)), 2)
+    flow_to_use /= flow_len
+
+    print(flow)
+    self.EstLrImg = func.grid_sample(self.lastLrImg, flow.permute(0, 2, 3, 1))
+
+    self.EstLrImg = func.grid_sample(self.lastLrImg, torch.unsqueeze(torch.tensor(flow_to_use), 0))
+
+    self.EstLrImg = input
+
+    self.EstLrImg = func.grid_sample(self.lastLrImg, torch.unsqueeze(torch.tensor(flow), 0))
+    '''
 
     # x is a 4-d tensor of shape N×C×H×W
     def forward(self, input):
         # print(f'input.shape is {input.shape}, lastImg shape is {self.lastLrImg.shape}')
         preflow = torch.cat((input, self.lastLrImg), dim=1)
         flow = self.fnet(preflow)
-        self.EstLrImg = func.grid_sample(self.lastLrImg, flow.permute(0, 2, 3, 1))
+        flow += self.lr_identity
+
+        # debug info goes here
+
+        self.EstLrImg = func.grid_sample(self.lastLrImg, flow.permute(0, 2, 3, 1), padding_mode='border')
+        # print(self.EstLrImg)
         flowNCHW = func.interpolate(flow, scale_factor=4, mode="bilinear")
-        flowNHWC = flowNCHW.permute(0, 2, 3, 1)  # shift c to last, as grid_sample function need it.
-        afterWarp = func.grid_sample(self.EstHrImg, flowNHWC)
+        # flowNCHW = torch.unsqueeze(self.hr_identity, dim=0)
+        flowNHWC = flowNCHW.permute(0, 2, 3, 1)  # shift c to last, as grid_sample function needs it.
+        afterWarp = func.grid_sample(self.EstHrImg, flowNHWC, padding_mode='border')
+        self.afterWarp = afterWarp  # for debugging, should be removed later.
         depthImg = self.todepth(afterWarp)
         srInput = torch.cat((input, depthImg), dim=1)
         estImg = self.srnet(srInput)
@@ -221,7 +262,7 @@ class TestFRVSR(unittest.TestCase):
         W = 16
         block = FRVSR(4, H, W)
         input = torch.rand(7, 4, 3, H, W)
-        block.init_hidden()
+        block.init_hidden(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         for batch_frames in input:
             output1, output2 = block(batch_frames)
             self.assertEqual(output1.shape, torch.empty(4, 3, H * 4, W * 4).shape)
