@@ -70,7 +70,7 @@ def run():
 
             #print(f'loss is {loss}')
             loss.backward()
-
+            # print("success")
             optimizer.step()
             running_loss += loss.item()
 
