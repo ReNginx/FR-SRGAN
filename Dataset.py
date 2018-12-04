@@ -73,7 +73,7 @@ class loader_wrapper(object):
         return len(self.loader)
 
 
-def get_data_loaders(batch, shuffle_dataset=True, dataset_size=0):
+def get_data_loaders(batch, shuffle_dataset=True, dataset_size=0, validation_split=0.2):
     # batch = 4 # batch size of the data every time for training
     # batch_number = 100000  # number of batches, so we totally have batch_number * batch images
     # HR_height = height
@@ -94,7 +94,7 @@ def get_data_loaders(batch, shuffle_dataset=True, dataset_size=0):
     random_seed = 42
     if dataset_size == 0:
         dataset_size = len(FRData)
-    validation_split = 0.2  # Train-Val : 8-2
+    #validation_split = 0.2  # Train-Val : 8-2
     print("Total data number:", len(FRData))
     indices = list(range(dataset_size))
     split = int(np.floor(validation_split * dataset_size))

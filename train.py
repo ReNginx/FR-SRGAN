@@ -23,8 +23,8 @@ def load_model(model_name, width, height):
 
 def run():
     # Parameters
-    num_epochs = 20
-    output_period = 10
+    num_epochs = 1000
+    output_period = 1
     batch_size = 4
     width, height = 112, 64
 
@@ -35,7 +35,7 @@ def run():
     
     torch.save(model.state_dict(), "models/FRVSRTest")
     
-    train_loader, val_loader = Dataset.get_data_loaders(batch_size)
+    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=8, validation_split=0)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
