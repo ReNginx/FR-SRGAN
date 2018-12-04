@@ -8,7 +8,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 base_transform = transforms.Compose([
     transforms.ToTensor(),
-    # transforms.Normalize([0.5]*3, [0.5]*3)
+    transforms.Normalize([0.5] * 3, [0.5] * 3)
 ])
 
 
@@ -73,7 +73,7 @@ class loader_wrapper(object):
         return len(self.loader)
 
 
-def get_data_loaders(batch, shuffle_dataset=True):
+def get_data_loaders(batch, shuffle_dataset=True, dataset_size=0):
     # batch = 4 # batch size of the data every time for training
     # batch_number = 100000  # number of batches, so we totally have batch_number * batch images
     # HR_height = height
@@ -92,7 +92,8 @@ def get_data_loaders(batch, shuffle_dataset=True):
 
     # print(data_loader[0].size())
     random_seed = 42
-    dataset_size = len(FRData)
+    if dataset_size == 0:
+        dataset_size = len(FRData)
     validation_split = 0.2  # Train-Val : 8-2
     print("Total data number:", len(FRData))
     indices = list(range(dataset_size))
