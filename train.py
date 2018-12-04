@@ -13,8 +13,8 @@ import FRVSR
 import Dataset
 
 
-def load_model(model_name, width, height):
-    model = FRVSR.FRVSR(4, lr_height=height, lr_width=width)
+def load_model(model_name, batch_size, width, height):
+    model = FRVSR.FRVSR(batch_size, lr_height=height, lr_width=width)
     if model_name != '':
         model_path = f'./models/{model_name}'
         checkpoint = torch.load(model_path, map_location='cpu')
@@ -24,24 +24,24 @@ def load_model(model_name, width, height):
 def run():
     # Parameters
     num_epochs = 1000
-    output_period = 1
-    batch_size = 4
+    output_period = 10
+    batch_size = 8
     width, height = 112, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('', width, height)
+    model = load_model('', width, height, batch_size)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
     
-    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=8, validation_split=0)
+    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=1000, validation_split=0)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
     flow_criterion = nn.MSELoss().to(device)
     content_criterion = nn.MSELoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-5)
 
     epoch = 1
     while epoch <= num_epochs:
@@ -57,7 +57,8 @@ def run():
             # print(f'lrimgs.shape is {lr_imgs.shape}')
             optimizer.zero_grad()
             model.init_hidden(device)
-            loss = 0
+            batch_content_loss = 0
+            batch_flow_loss = 0
 
             # lr_imgs = 7 * 4 * 3 * H * W
             for lr_img, hr_img in zip(lr_imgs, hr_imgs):
@@ -66,10 +67,15 @@ def run():
                 content_loss = content_criterion(hr_est, hr_img)
                 flow_loss = flow_criterion(lr_est, lr_img)
                 #print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
-                loss += content_loss + flow_loss
+                batch_content_loss += content_loss
+                batch_flow_loss += flow_loss
 
             #print(f'loss is {loss}')
+            loss = batch_content_loss + batch_flow_loss
             loss.backward()
+            
+            #print(f'content_loss {batch_content_loss}, flow_loss {batch_flow_loss}')
+            
             # print("success")
             optimizer.step()
             running_loss += loss.item()
