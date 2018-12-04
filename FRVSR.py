@@ -132,8 +132,8 @@ class FRVSR(nn.Module):
         self.height = lr_height
         self.batch_size = batch_size
         self.fnet = FNet()
-        self.todepth = SpaceToDepth(4)
-        self.srnet = SRNet()
+        self.todepth = SpaceToDepth(FRVSR.SRFactor)
+        self.srnet = SRNet(batch_size * FRVSR.SRFactor * 3 + 3)  # 3 is channel number
 
     # make sure to call this before every batch train.
     def init_hidden(self, device):
