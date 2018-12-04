@@ -30,7 +30,7 @@ def run():
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('FRVSR.3', width, height)
+    model = load_model('', width, height)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
