@@ -176,9 +176,11 @@ class FRVSR(nn.Module):
     # x is a 4-d tensor of shape N×C×H×W
     def forward(self, input):
         def trunc(tensor):
-            tensor = tensor.clone()
-            tensor[tensor < 0] = 0
-            tensor[tensor > 1] = 1
+            tensor = torch.max(tensor, 0)
+            tensor = torch.min(tensor, 1)
+            # tensor = tensor.clone()
+            # tensor[tensor < 0] = 0
+            # tensor[tensor > 1] = 1
             return tensor
 
         # print(f'input.shape is {input.shape}, lastImg shape is {self.lastLrImg.shape}')
