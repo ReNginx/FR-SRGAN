@@ -175,6 +175,12 @@ class FRVSR(nn.Module):
 
     # x is a 4-d tensor of shape N×C×H×W
     def forward(self, input):
+        def trunc(tensor):
+            tensor = tensor.clone()
+            tensor[tensor < 0] = 0
+            tensor[tensor > 1] = 1
+            return tensor
+
         # print(f'input.shape is {input.shape}, lastImg shape is {self.lastLrImg.shape}')
         preflow = torch.cat((input, self.lastLrImg), dim=1)
         flow = self.fnet(preflow)
@@ -182,6 +188,7 @@ class FRVSR(nn.Module):
         relative_place = flow + self.lr_identity
         # debug info goes here
         self.EstLrImg = func.grid_sample(self.lastLrImg, relative_place.permute(0, 2, 3, 1), padding_mode='border')
+        self.EstLrImg = trunc(self.EstLrImg)
         # print(self.EstLrImg)
         relative_placeNCHW = func.interpolate(relative_place, scale_factor=4, mode="bilinear")
         # relative_placeNCHW = torch.unsqueeze(self.hr_identity, dim=0)
@@ -194,6 +201,7 @@ class FRVSR(nn.Module):
         estImg = self.srnet(srInput)
         self.lastLrImg = input
         self.EstHrImg = estImg
+        self.EstHrImg = trunc(self.EstHrImg)
         return self.EstHrImg, self.EstLrImg
 
     def set_param(self, **kwargs):
