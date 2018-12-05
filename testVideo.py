@@ -53,11 +53,11 @@ if __name__ == "__main__":
             image = Variable(ToTensor()(frame), volatile=True).unsqueeze(0)
             image.to(device)
             # print(f'image shape is {image.shape}')
-            # if torch.cuda.is_available():
-            #     image = image.cuda()
+            if torch.cuda.is_available():
+                 image = image.cuda()
 
             hr_out, lr_out = model(image)
-            model.init_hidden(device)
+            #model.init_hidden(device)
             hr_out = hr_out.cpu()
             out_img = hr_out.data[0].numpy()
             out_img *= 255.0
