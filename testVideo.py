@@ -22,7 +22,7 @@ if __name__ == "__main__":
         MODEL_NAME = opt.model
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = FRVSR.FRVSR(0, 0, 0).eval()
+        model = FRVSR.FRVSR(0, 0, 0)
 
         model.to(device)
 
@@ -58,16 +58,16 @@ if __name__ == "__main__":
                 if torch.cuda.is_available():
                     image = image.cuda()
 
-                    hr_out, lr_out = model(image)
-                    #model.init_hidden(device)
-                    hr_out = hr_out.cpu()
-                    out_img = hr_out.data[0].numpy()
-                    out_img *= 255.0
-                    out_img = (np.uint8(out_img)).transpose((1, 2, 0))
-                    # save sr video
-                    sr_video_writer.write(out_img)
-                    
-                    # next frame
-                    success, frame = videoCapture.read()
-                    sr_video_writer.release()
+                hr_out, lr_out = model(image)
+                #model.init_hidden(device)
+                hr_out = hr_out.cpu()
+                out_img = hr_out.data[0].numpy()
+                out_img *= 255.0
+                out_img = (np.uint8(out_img)).transpose((1, 2, 0))
+                # save sr video
+                sr_video_writer.write(out_img)
+                
+                # next frame
+                success, frame = videoCapture.read()
+        sr_video_writer.release()
                     
