@@ -12,7 +12,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 import Dataset
 import FRVSR
 from skimage import img_as_ubyte
-from skimage import img_as_float32
+from skimage.util import img_as_float32
 
 
 def test_optic_flow(frame1, frame2):
@@ -60,9 +60,19 @@ def test_optic_flow(frame1, frame2):
     # cap.release()
     # cv2.destroyAllWindows()
 
+import math
+
+def psnr(img1, img2):
+    #print(img1.size())
+    mse = np.mean( (img1 - img2) ** 2 )
+    if mse == 0:
+        return 100
+    PIXEL_MAX = 255.0
+    return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test Single Video')
-    parser.add_argument('--model', default='./models/FRVSR.3', type=str, help='generator model epoch name')
+    parser.add_argument('--model', default='./models/FRVSR.XS2', type=str, help='generator model epoch name')
     opt = parser.parse_args()
 
     UPSCALE_FACTOR = 4
@@ -104,7 +114,9 @@ if __name__ == "__main__":
     # test_optic_flow(lr_example[0][0].permute(1,2,0).numpy(), \
     #                  lr_example[1][0].permute(1,2,0).numpy())
 
-    for image in lr_example:
+    out_psnr = 0
+
+    for image, ground_truth in zip(lr_example, hr_example):
         image.to(device)
         # print(f'image shape is {image.shape}')
         # if torch.cuda.is_available():
@@ -114,6 +126,10 @@ if __name__ == "__main__":
         hr_out = hr_out.clone()
         lr_out = lr_out.clone()
         aw_out = model.afterWarp.clone()
+        print((hr_out.data.numpy()-ground_truth.data.numpy()).shape)
+        out_psnr = out_psnr + psnr(hr_out.data.numpy(),ground_truth.data.numpy()) / 3.0
+
+    #print("psnr:" + str(psnr))
 
 
         #model.init_hidden(device)
@@ -133,3 +149,6 @@ if __name__ == "__main__":
     hr_video_writer.release()
     lr_video_writer.release()
     aw_video_writer.release()
+    print("psnr:" + str(out_psnr))
+
+
