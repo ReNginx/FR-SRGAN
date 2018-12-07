@@ -97,8 +97,9 @@ class FNet(nn.Module):
         out = self.conv1(out)
         out = func.leaky_relu(out, 0.2)
         out = self.conv2(out)
-        out = torch.tanh(out)
-        return out
+        self.out = torch.tanh(out)
+        self.out.retain_grad()
+        return self.out
 
 
 # please ensure that input is (batch_size, depth, height, width)
@@ -202,6 +203,7 @@ class FRVSR(nn.Module):
         self.lastLrImg = input
         self.EstHrImg = estImg
         self.EstHrImg = trunc(self.EstHrImg)
+        self.EstHrImg.retain_grad()
         return self.EstHrImg, self.EstLrImg
 
     def set_param(self, **kwargs):

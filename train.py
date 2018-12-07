@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import FRVSR
 import Dataset
-
+import grad_vis
 
 def load_model(model_name, batch_size, width, height):
     model = FRVSR.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
@@ -24,18 +24,18 @@ def load_model(model_name, batch_size, width, height):
 def run():
     # Parameters
     num_epochs = 1000
-    output_period = 10
-    batch_size = 8
+    output_period = 1
+    batch_size = 4
     width, height = 112, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('', batch_size, width, height)
+    model = load_model('FRVSR.XS2', batch_size, width, height)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
-    
-    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=1000, validation_split=0)
+
+    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=8000, validation_split=0)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
@@ -72,8 +72,16 @@ def run():
 
             #print(f'loss is {loss}')
             loss = batch_content_loss + batch_flow_loss
+
+            # get_dot = grad_vis.register_hooks(loss)
+
             loss.backward()
-            
+
+            # dot = get_dot()
+            # dot.save('tmp.dot')
+            print(model.fnet.out.grad)
+            print(model.EstHrImg.grad)
+            exit(0)
             #print(f'content_loss {batch_content_loss}, flow_loss {batch_flow_loss}')
             
             # print("success")

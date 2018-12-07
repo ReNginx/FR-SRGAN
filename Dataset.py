@@ -8,7 +8,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 base_transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize([0.5] * 3, [0.5] * 3)
+    # transforms.Normalize([0.5] * 3, [0.5] * 3)
 ])
 
 
