@@ -188,7 +188,7 @@ class FRVSR(nn.Module):
         relative_place = flow + self.lr_identity
         # debug info goes here
         self.EstLrImg = func.grid_sample(self.lastLrImg, relative_place.permute(0, 2, 3, 1), padding_mode='border')
-        self.EstLrImg = trunc(self.EstLrImg)
+        # self.EstLrImg = trunc(self.EstLrImg)
         # print(self.EstLrImg)
         relative_placeNCHW = func.interpolate(relative_place, scale_factor=4, mode="bilinear")
         # relative_placeNCHW = torch.unsqueeze(self.hr_identity, dim=0)
@@ -201,7 +201,8 @@ class FRVSR(nn.Module):
         estImg = self.srnet(srInput)
         self.lastLrImg = input
         self.EstHrImg = estImg
-        self.EstHrImg = trunc(self.EstHrImg)
+        # self.EstHrImg = trunc(self.EstHrImg)
+        self.EstHrImg.retain_grad()
         return self.EstHrImg, self.EstLrImg
 
     def set_param(self, **kwargs):

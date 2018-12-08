@@ -9,6 +9,8 @@ from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
 import FRVSR
+import Dataset
+import checkTrain
 
 if __name__ == "__main__":
     with torch.no_grad():
@@ -52,6 +54,8 @@ if __name__ == "__main__":
         for index in test_bar:
             if success:
                 image = Variable(ToTensor()(frame)).unsqueeze(0)
+                print(image.shape)
+                image = Dataset.norm_transform(image.clone())
                 #torch.no_grad()
                 image.to(device)
                 # print(f'image shape is {image.shape}')
@@ -60,6 +64,8 @@ if __name__ == "__main__":
 
                 hr_out, lr_out = model(image)
                 #model.init_hidden(device)
+                hr_out = Dataset.inverse_transform(hr_out.clone())
+                hr_out = checkTrain.trunc(hr_out)
                 hr_out = hr_out.cpu()
                 out_img = hr_out.data[0].numpy()
                 out_img *= 255.0

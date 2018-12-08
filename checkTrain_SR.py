@@ -21,6 +21,7 @@ def trunc(tensor):
     tensor[tensor > 1] = 1
     return tensor
 
+
 def test_optic_flow(frame1, frame2):
     # im1 = img_as_ubyte(frame1)
     # im2 = img_as_ubyte(frame2)
@@ -66,7 +67,9 @@ def test_optic_flow(frame1, frame2):
     # cap.release()
     # cv2.destroyAllWindows()
 
+
 import math
+
 
 def psnr(img1, img2):
     # print(img1.size())
@@ -76,16 +79,17 @@ def psnr(img1, img2):
     PIXEL_MAX = 255.0
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse)) / 3
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test Single Video')
-    parser.add_argument('--model', default='./models/FRVSR.20', type=str, help='generator model epoch name')
+    parser.add_argument('--model', default='./models/LR-5_SRN.25', type=str, help='generator model epoch name')
     opt = parser.parse_args()
 
     UPSCALE_FACTOR = 4
     MODEL_NAME = opt.model
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = FRVSR.FRVSR(0, 0, 0)
+    model = FRVSR.SRNet(3)
     model.to(device)
 
     # for cpu
@@ -102,9 +106,6 @@ if __name__ == "__main__":
         # frame_numbers = 100
         lr_width = lr_example.shape[4]
         lr_height = lr_example.shape[3]
-        model.set_param(batch_size=1, width=lr_width, height=lr_height)
-        print(model.width, model.height)
-        model.init_hidden(device)
 
         hr_video_size = (lr_width * UPSCALE_FACTOR,
                          lr_height * UPSCALE_FACTOR)
@@ -113,12 +114,11 @@ if __name__ == "__main__":
         output_sr_name = 'out_srf_' + str(UPSCALE_FACTOR) + '_' + 'random_sample.mp4'
         output_gt_name = 'out_srf_' + 'groundtruth' + '_' + 'random_sample.mp4'
         output_lr_name = 'out_srf_' + 'original' + '_' + 'random_sample.mp4'
-        output_aw_name = 'out_srf_' + 'warp' + '_' + 'random_sample.mp4'
 
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         hr_video_writer = cv2.VideoWriter(output_sr_name, fourcc, fps, hr_video_size)
         lr_video_writer = cv2.VideoWriter(output_lr_name, fourcc, fps, lr_video_size)
-        aw_video_writer = cv2.VideoWriter(output_aw_name, fourcc, fps, hr_video_size)
+
         gt_video_writer = cv2.VideoWriter(output_gt_name, fourcc, fps, hr_video_size)
         # read frame
         # test_optic_flow(lr_example[0][0].permute(1,2,0).numpy(), \
@@ -135,8 +135,8 @@ if __name__ == "__main__":
             # print(f'image shape is {image.shape}')
             # if torch.cuda.is_available():
             #     image = image.cuda()
-
-            hr_out, lr_out = model(image)
+            lr_out = image
+            hr_out = model(image)
             hr_out = hr_out.clone()
             lr_out = lr_out.clone()
             # plt.imshow(hr_out[0].permute(1,2,0).detach().numpy())
@@ -156,7 +156,6 @@ if __name__ == "__main__":
             truth = Dataset.inverse_transform(truth.clone())
             hr_out = trunc(hr_out.clone())
             lr_out = trunc(lr_out.clone())
-            aw_out = model.afterWarp.clone()
 
             out_psnr += psnr(hr_out, truth)
             l1 = torch.mean((truth - hr_out) ** 2)
@@ -182,12 +181,12 @@ if __name__ == "__main__":
 
             output(hr_out, hr_video_writer)
             output(lr_out, lr_video_writer)
-            output(aw_out, aw_video_writer)
+
             output(truth, gt_video_writer)
 
         hr_video_writer.release()
         lr_video_writer.release()
-        aw_video_writer.release()
+
         gt_video_writer.release()
         print(f"pnsr is {out_psnr / 7}")
         break

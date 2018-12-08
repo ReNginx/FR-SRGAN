@@ -8,6 +8,8 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
+import Dataset
+import checkTrain
 import FRVSR
 
 if __name__ == "__main__":
@@ -20,7 +22,8 @@ if __name__ == "__main__":
         UPSCALE_FACTOR = 4
         VIDEO_NAME = opt.video
         MODEL_NAME = opt.model
-
+        print(VIDEO_NAME)
+        print(MODEL_NAME)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         #model = FRVSR.FRVSR(0, 0, 0)
         model = FRVSR.SRNet(3) # testing the SRNet only
@@ -59,7 +62,12 @@ if __name__ == "__main__":
                 if torch.cuda.is_available():
                     image = image.cuda()
 
+                image = Dataset.norm_transform(image)
+
                 hr_out = model(image)
+
+                hr_out = Dataset.inverse_transform(hr_out)
+                hr_out = checkTrain.trunc(hr_out)
                 #model.init_hidden(device)
                 hr_out = hr_out.cpu()
                 out_img = hr_out.data[0].numpy()
