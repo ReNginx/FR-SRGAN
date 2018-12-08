@@ -11,35 +11,38 @@ import matplotlib.pyplot as plt
 import numpy as np
 import FRVSR
 import Dataset
-import grad_vis
+import pytorch_ssim
+from skimage.measure import compare_ssim as ssim
+
 
 def load_model(model_name, batch_size, width, height):
-    model = FRVSR.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
+    model = FRVSR.SRNet(in_dim  = 3)
     if model_name != '':
         model_path = f'./models/{model_name}'
+        print("successfully loaded the model")
         checkpoint = torch.load(model_path, map_location='cpu')
         model.load_state_dict(checkpoint)
     return model
 
 def run():
     # Parameters
-    num_epochs = 1000
-    output_period = 1
-    batch_size = 4
+    num_epochs = 100
+    output_period = 10
+    batch_size = 8
     width, height = 112, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('FRVSR.XS2', batch_size, width, height)
+    model = load_model('', batch_size, width, height)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
-
-    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=8000, validation_split=0)
+    
+    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=7000, validation_split=0)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
-    flow_criterion = nn.MSELoss().to(device)
+    #flow_criterion = nn.MSELoss().to(device)
     content_criterion = nn.MSELoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-5)
 
@@ -56,33 +59,35 @@ def run():
             # print(f'hrimgs.shape is {hr_imgs.shape}')
             # print(f'lrimgs.shape is {lr_imgs.shape}')
             optimizer.zero_grad()
-            model.init_hidden(device)
+            #model.init_hidden(device)
             batch_content_loss = 0
-            batch_flow_loss = 0
+            #batch_flow_loss = 0
 
             # lr_imgs = 7 * 4 * 3 * H * W
             for lr_img, hr_img in zip(lr_imgs, hr_imgs):
                 # print(lr_img.shape)
-                hr_est, lr_est = model(lr_img)
-                content_loss = content_criterion(hr_est, hr_img)
-                flow_loss = flow_criterion(lr_est, lr_img)
+                hr_est = model(lr_img)
+                
+                content_loss = torch.mean((hr_est - hr_img) ** 2)
+                #ssim-content_loss
+                #ssim_loss = pytorch_ssim.SSIM(window_size = 11)
+                #content_loss = ssim_loss(hr_est, hr_img)
+                #                ssim_loss = pytorch_ssim.ssim(hr_est, hr_img).data[0]
+                #                 ssim_loss.to(device)
+                #                 content_loss = ssim_loss
+                 
+                #flow_loss = flow_criterion(lr_est, lr_img)
+                
                 #print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
                 batch_content_loss += content_loss
-                batch_flow_loss += flow_loss
+                #batch_flow_loss += flow_loss
+                
 
             #print(f'loss is {loss}')
-            loss = batch_content_loss + batch_flow_loss
-
-            # get_dot = grad_vis.register_hooks(loss)
-
+            loss = batch_content_loss
             loss.backward()
-
-            # dot = get_dot()
-            # dot.save('tmp.dot')
-            print(model.fnet.out.grad)
-            print(model.EstHrImg.grad)
-            exit(0)
-            #print(f'content_loss {batch_content_loss}, flow_loss {batch_flow_loss}')
+            
+            print(f'content_loss {batch_content_loss}')
             
             # print("success")
             optimizer.step()
@@ -98,7 +103,7 @@ def run():
 
         gc.collect()
         # save after every epoch
-        torch.save(model.state_dict(), "models/FRVSR.%d" % epoch)
+        torch.save(model.state_dict(), "models/LR-5_SRN.%d" % epoch)
 
         # model.eval()
 
@@ -136,3 +141,4 @@ if __name__ == "__main__":
     print('Starting training')
     run()
     print('Training terminated')
+
