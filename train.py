@@ -10,7 +10,7 @@ torch.backends.cudnn.benchmark = True
 import matplotlib.pyplot as plt
 import numpy as np
 import FRVSR
-import Dataset
+import Dataset_OnlyHR
 import grad_vis
 
 def load_model(model_name, batch_size, width, height):
@@ -26,7 +26,7 @@ def run():
     num_epochs = 1000
     output_period = 1
     batch_size = 4
-    width, height = 112, 64
+    width, height = 64, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -35,7 +35,7 @@ def run():
     
     torch.save(model.state_dict(), "models/FRVSRTest")
 
-    train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=8000, validation_split=0)
+    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(batch_size, dataset_size=0, validation_split=0)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
