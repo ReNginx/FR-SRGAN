@@ -8,9 +8,9 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
-import FRVSR
 import Dataset
 import checkTrain
+import FRVSR
 
 if __name__ == "__main__":
     with torch.no_grad():
@@ -22,9 +22,11 @@ if __name__ == "__main__":
         UPSCALE_FACTOR = 4
         VIDEO_NAME = opt.video
         MODEL_NAME = opt.model
-
+        print(VIDEO_NAME)
+        print(MODEL_NAME)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = FRVSR.FRVSR(0, 0, 0)
+        #model = FRVSR.FRVSR(0, 0, 0)
+        model = FRVSR.SRNet(3) # testing the SRNet only
 
         model.to(device)
 
@@ -39,8 +41,8 @@ if __name__ == "__main__":
         # frame_numbers = 100
         lr_width = int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))
         lr_height = int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        model.set_param(batch_size=1, width=lr_width, height=lr_height)
-        model.init_hidden(device)
+        #model.set_param(batch_size=1, width=lr_width, height=lr_height)
+        #model.init_hidden(device)
         
         sr_video_size = (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH) * UPSCALE_FACTOR),
                          int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT)) * UPSCALE_FACTOR)
@@ -54,18 +56,19 @@ if __name__ == "__main__":
         for index in test_bar:
             if success:
                 image = Variable(ToTensor()(frame)).unsqueeze(0)
-                print(image.shape)
-                image = Dataset.norm_transform(image.clone())
                 #torch.no_grad()
                 image.to(device)
                 # print(f'image shape is {image.shape}')
                 if torch.cuda.is_available():
                     image = image.cuda()
 
-                hr_out, lr_out = model(image)
-                #model.init_hidden(device)
-                hr_out = Dataset.inverse_transform(hr_out.clone())
+                image = Dataset.norm_transform(image)
+
+                hr_out = model(image)
+
+                hr_out = Dataset.inverse_transform(hr_out)
                 hr_out = checkTrain.trunc(hr_out)
+                #model.init_hidden(device)
                 hr_out = hr_out.cpu()
                 out_img = hr_out.data[0].numpy()
                 out_img *= 255.0
@@ -77,3 +80,4 @@ if __name__ == "__main__":
                 success, frame = videoCapture.read()
         sr_video_writer.release()
                     
+

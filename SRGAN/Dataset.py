@@ -4,22 +4,12 @@ import torch.utils.data as data
 import os
 from PIL import Image
 import numpy as np
-from torch.utils.data.sampler import SubsetRandomSampler, SequentialSampler
+from torch.utils.data.sampler import SubsetRandomSampler
 
 base_transform = transforms.Compose([
     transforms.ToTensor(),
-    # transforms.Normalize([0.5] * 3, [0.5] * 3)
-])
-
-norm_transform = transforms.Compose([
     transforms.Normalize([0.5] * 3, [0.5] * 3)
 ])
-
-inverse_transform = transforms.Compose([transforms.Normalize(mean=[0., 0., 0.],
-                                                             std=[1 / 0.5] * 3),
-                                        transforms.Normalize(mean=[-0.5] * 3,
-                                                             std=[1., 1., 1.]),
-                                        ])
 
 
 def image_loader(path):
