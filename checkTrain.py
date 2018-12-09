@@ -96,7 +96,7 @@ if __name__ == "__main__":
     model.load_state_dict(checkpoint)
     model.train()
 
-    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=4, validation_split=1,
+    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=400, validation_split=1,
                                                                shuffle_dataset=True)
     out_psnr = 0
     for lr_example, hr_example in val_loader:
@@ -152,10 +152,10 @@ if __name__ == "__main__":
             print(l2)
             # print(lr_out)
             # # print(image)
-            hr_out = Dataset_OnlyHR.inverse_transform(hr_out.clone())
-            lr_out = Dataset_OnlyHR.inverse_transform(lr_out.clone())
-            image = Dataset_OnlyHR.inverse_transform(image.clone())
-            truth = Dataset_OnlyHR.inverse_transform(truth.clone())
+            # hr_out = Dataset_OnlyHR.inverse_transform(hr_out.clone())
+            # lr_out = Dataset_OnlyHR.inverse_transform(lr_out.clone())
+            # image = Dataset_OnlyHR.inverse_transform(image.clone())
+            # truth = Dataset_OnlyHR.inverse_transform(truth.clone())
             hr_out = trunc(hr_out.clone())
             lr_out = trunc(lr_out.clone())
             aw_out = model.afterWarp.clone()

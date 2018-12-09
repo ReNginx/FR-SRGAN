@@ -15,7 +15,7 @@ import FRVSR_models
 import Dataset
 import checkTrain
 
-hr = cv2.VideoCapture('out_srf_4_lr_test_.mp4')
+hr = cv2.VideoCapture('out_srf_4_lr_test.mp4')
 gt = cv2.VideoCapture('hr_test.mp4')
 
 out_psnr = 0
