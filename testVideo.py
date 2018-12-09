@@ -52,6 +52,7 @@ if __name__ == "__main__":
         # read frame
         success, frame = videoCapture.read()
         test_bar = tqdm(range(int(frame_numbers)), desc='[processing video and saving result videos]')
+        idx = 0
         for index in test_bar:
             if success:
                 image = Variable(ToTensor()(frame)).unsqueeze(0)
@@ -65,7 +66,7 @@ if __name__ == "__main__":
 
                 hr_out, lr_out = model(image)
                 #model.init_hidden(device)
-                # hr_out = Dataset.inverse_transform(hr_out.clone())
+                #hr_out = Dataset.inverse_transform(hr_out.clone())
                 hr_out = checkTrain.trunc(hr_out.clone())
                 hr_out = hr_out.cpu()
                 out_img = hr_out.data[0].numpy()
@@ -73,6 +74,8 @@ if __name__ == "__main__":
                 out_img = (np.uint8(out_img)).transpose((1, 2, 0))
                 # save sr video
                 sr_video_writer.write(out_img)
+                idx += 1
+                cv2.imwrite(f'./outputframes/idx_checktrain_{idx}.png', out_img)
                 
                 # next frame
                 success, frame = videoCapture.read()
