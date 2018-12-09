@@ -6,12 +6,14 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler
 
+from SRGAN import pytorch_ssim
+
 torch.backends.cudnn.benchmark = True
 import matplotlib.pyplot as plt
 import numpy as np
 import FRVSR
 import Dataset_OnlyHR
-import grad_vis
+
 
 def load_model(model_name, batch_size, width, height):
     model = FRVSR.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
@@ -23,14 +25,14 @@ def load_model(model_name, batch_size, width, height):
 
 def run():
     # Parameters
-    num_epochs = 1000
-    output_period = 1
+    num_epochs = 25
+    output_period = 10
     batch_size = 4
     width, height = 64, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = load_model('FRVSR.XS2', batch_size, width, height)
+    model = load_model('', batch_size, width, height)
     model = model.to(device)
     
     torch.save(model.state_dict(), "models/FRVSRTest")
@@ -40,7 +42,9 @@ def run():
     num_val_batches = len(val_loader)
 
     flow_criterion = nn.MSELoss().to(device)
-    content_criterion = nn.MSELoss().to(device)
+    content_criterion = FRVSR.Loss().to(device)
+
+    ssim_loss = pytorch_ssim.SSIM(window_size=11).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-5)
 
     epoch = 1
@@ -61,28 +65,28 @@ def run():
             batch_flow_loss = 0
 
             # lr_imgs = 7 * 4 * 3 * H * W
+            cnt = 0
             for lr_img, hr_img in zip(lr_imgs, hr_imgs):
                 # print(lr_img.shape)
                 hr_est, lr_est = model(lr_img)
                 content_loss = content_criterion(hr_est, hr_img)
-                flow_loss = flow_criterion(lr_est, lr_img)
+                flow_loss = torch.mean((lr_img - lr_est) ** 2)
+                # flow_loss = ssim_loss(lr_img, lr_est)
                 #print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
                 batch_content_loss += content_loss
-                batch_flow_loss += flow_loss
+                if cnt > 0:
+                    batch_flow_loss += flow_loss
+                cnt += 1
 
             #print(f'loss is {loss}')
             loss = batch_content_loss + batch_flow_loss
-
-            # get_dot = grad_vis.register_hooks(loss)
-
             loss.backward()
 
             # dot = get_dot()
             # dot.save('tmp.dot')
-            print(model.fnet.out.grad)
-            print(model.EstHrImg.grad)
-            exit(0)
-            #print(f'content_loss {batch_content_loss}, flow_loss {batch_flow_loss}')
+            print(torch.max(model.fnet.out.grad))
+            print(torch.max(model.EstHrImg.grad))
+            print(f'content_loss {batch_content_loss}, flow_loss {batch_flow_loss}')
             
             # print("success")
             optimizer.step()
@@ -92,7 +96,7 @@ def run():
                 print('[%d:%.2f] loss: %.3f' % (
                     epoch, batch_num * 1.0 / num_train_batches,
                     running_loss / output_period
-                ))
+                ), file=sys.stderr)
                 running_loss = 0.0
                 gc.collect()
 
