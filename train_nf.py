@@ -9,14 +9,14 @@ import torch.optim.lr_scheduler
 torch.backends.cudnn.benchmark = True
 import matplotlib.pyplot as plt
 import numpy as np
-import FRVSR
+import FRVSR_models
 import Dataset
 import pytorch_ssim
 from skimage.measure import compare_ssim as ssim
 
 
 def load_model(model_name, batch_size, width, height):
-    model = FRVSR.SRNet(in_dim  = 3)
+    model = FRVSR_models.SRNet(in_dim=3)
     if model_name != '':
         model_path = f'./models/{model_name}'
         print("successfully loaded the model")

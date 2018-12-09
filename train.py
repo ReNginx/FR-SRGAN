@@ -11,12 +11,12 @@ from SRGAN import pytorch_ssim
 torch.backends.cudnn.benchmark = True
 import matplotlib.pyplot as plt
 import numpy as np
-import FRVSR
+import FRVSR_models
 import Dataset_OnlyHR
 
 
 def load_model(model_name, batch_size, width, height):
-    model = FRVSR.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
+    model = FRVSR_models.FRVSR(batch_size=batch_size, lr_height=height, lr_width=width)
     if model_name != '':
         model_path = f'./models/{model_name}'
         checkpoint = torch.load(model_path, map_location='cpu')
@@ -42,7 +42,7 @@ def run():
     num_val_batches = len(val_loader)
 
     flow_criterion = nn.MSELoss().to(device)
-    content_criterion = FRVSR.Loss().to(device)
+    content_criterion = FRVSR_models.Loss().to(device)
 
     ssim_loss = pytorch_ssim.SSIM(window_size=11).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-5)

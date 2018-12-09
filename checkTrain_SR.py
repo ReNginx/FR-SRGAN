@@ -10,7 +10,7 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 import Dataset
-import FRVSR
+import FRVSR_models
 from skimage import img_as_ubyte
 from skimage.util import img_as_float32
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     MODEL_NAME = opt.model
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = FRVSR.SRNet(3)
+    model = FRVSR_models.SRNet(3)
     model.to(device)
 
     # for cpu

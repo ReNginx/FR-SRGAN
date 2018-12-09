@@ -10,10 +10,10 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import Dataset_OnlyHR
-from FRVSR import FRVSR
+from FRVSR_models import FRVSR
 
 from SRGAN.data_utils import TrainDatasetFromFolder, ValDatasetFromFolder, display_transform
-from FRVSR import GeneratorLoss
+from FRVSR_models import GeneratorLoss
 from SRGAN.model import Generator, Discriminator
 import SRGAN.pytorch_ssim as pts
 

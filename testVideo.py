@@ -8,7 +8,7 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
-import FRVSR
+import FRVSR_models
 import Dataset
 import checkTrain
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         MODEL_NAME = opt.model
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = FRVSR.FRVSR(0, 0, 0)
+        model = FRVSR_models.FRVSR(0, 0, 0)
 
         model.to(device)
 

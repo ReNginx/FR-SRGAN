@@ -10,7 +10,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
 import Dataset
 import checkTrain
-import FRVSR
+import FRVSR_models
 
 if __name__ == "__main__":
     with torch.no_grad():
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         print(MODEL_NAME)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         #model = FRVSR.FRVSR(0, 0, 0)
-        model = FRVSR.SRNet(3) # testing the SRNet only
+        model = FRVSR_models.SRNet(3)  # testing the SRNet only
 
         model.to(device)
 

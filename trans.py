@@ -11,7 +11,7 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
-import FRVSR
+import FRVSR_models
 import Dataset
 import checkTrain
 
