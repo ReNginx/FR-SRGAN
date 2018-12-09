@@ -82,10 +82,10 @@ for epoch in range(1, NUM_EPOCHS + 1):
         netG.init_hidden(device)
 
         for lr_img, hr_img in zip(data, target):
-            if torch.cuda.is_available():
-                hr_img = hr_img.cuda()
-            if torch.cuda.is_available():
-                lr_img = lr_img.cuda()
+            #if torch.cuda.is_available():
+            hr_img = hr_img.to(device)
+            #if torch.cuda.is_available():
+            lr_img = lr_img.to(device)
 
             fake_hr, fake_lr = netG(lr_img)
 
@@ -110,6 +110,11 @@ for epoch in range(1, NUM_EPOCHS + 1):
         netG.zero_grad()
         for fake_hr, fake_lr, fake_scr, hr_img, lr_img \
                 in zip(fake_hrs, fake_lrs, fake_scrs, target, data):
+            fake_hr = fake_hr.to(device)
+            fake_lr = fake_lr.to(device)
+            fake_scr = fake_scr.to(device)
+            hr_img = hr_img.to(device)
+            lr_img = lr_img.to(device)
             g_loss += generator_criterion(fake_scr, fake_hr, hr_img, fake_lr, lr_img)
 
         g_loss /= len(data)
@@ -118,10 +123,10 @@ for epoch in range(1, NUM_EPOCHS + 1):
 
         real_out = torch.Tensor(real_scrs).mean()
         fake_out = torch.Tensor(fake_scrs).mean()
-        running_results['g_loss'] += g_loss.data[0] * batch_size
-        running_results['d_loss'] += d_loss.data[0] * batch_size
-        running_results['d_score'] += real_out.data[0] * batch_size
-        running_results['g_score'] += fake_out.data[0] * batch_size
+        running_results['g_loss'] += g_loss.data.item() * batch_size
+        running_results['d_loss'] += d_loss.data.item() * batch_size
+        running_results['d_score'] += real_out.data.item() * batch_size
+        running_results['g_score'] += fake_out.data.item() * batch_size
 
         train_bar.set_description(desc='[%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f' % (
             epoch, NUM_EPOCHS, running_results['d_loss'] / running_results['batch_sizes'],
@@ -142,11 +147,9 @@ for epoch in range(1, NUM_EPOCHS + 1):
 
         netG.init_hidden(device)
         for lr, hr in zip(val_lr, val_hr):
-            lr = Variable(val_lr)
-            hr = Variable(val_hr)
-            if torch.cuda.is_available():
-                lr = lr.cuda()
-                hr = hr.cuda()
+            lr = lr.to(device)
+            hr = hr.to(device)
+
             hr_est, lr_est = netG(lr)
 
         batch_mse = ((hr_est - hr) ** 2).data.mean()
