@@ -41,7 +41,7 @@ train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(batch_size, dataset_s
 num_train_batches = len(train_loader)
 num_val_batches = len(val_loader)
 
-netG = FRVSR.FRVSR(batch_size, lr_width=WIDTH, lr_height=HEIGHT)
+netG = FRVSR(batch_size, lr_width=WIDTH, lr_height=HEIGHT)
 print('# generator parameters:', sum(param.numel() for param in netG.parameters()))
 netD = Discriminator()
 print('# discriminator parameters:', sum(param.numel() for param in netD.parameters()))
