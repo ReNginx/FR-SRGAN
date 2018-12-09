@@ -53,8 +53,8 @@ if torch.cuda.is_available():
     netD.cuda()
     generator_criterion.cuda()
 
-optimizerG = optim.Adam(netG.parameters())
-optimizerD = optim.Adam(netD.parameters())
+optimizerG = optim.Adam(netG.parameters(), lr=1e-5)
+optimizerD = optim.Adam(netD.parameters(), lr=1e-5)
 
 results = {'d_loss': [], 'g_loss': [], 'd_score': [], 'g_score': [], 'psnr': [], 'ssim': []}
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
