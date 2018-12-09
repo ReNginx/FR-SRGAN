@@ -37,7 +37,7 @@ def run():
     
     torch.save(model.state_dict(), "models/FRVSRTest")
 
-    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(batch_size, dataset_size=0, validation_split=0)
+    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(batch_size, dataset_size=0, validation_split=0.2)
     num_train_batches = len(train_loader)
     num_val_batches = len(val_loader)
 
@@ -104,33 +104,37 @@ def run():
         # save after every epoch
         torch.save(model.state_dict(), "models/FRVSR.%d" % epoch)
 
-        # model.eval()
+        model.eval()
+        with torch.no_grad():
+            output_period = 0
+            running_loss = 0
+            for batch_num, (lr_imgs, hr_imgs) in enumerate(val_loader, 1):
+                lr_imgs = lr_imgs.to(device)
+                hr_imgs = hr_imgs.to(device)
+                model.init_hidden(device)
+                batch_content_loss = 0
+                batch_flow_loss = 0
 
-        # a helper function to calc topk error
-        # def calcTopKError(loader, k, name):
-        #     epoch_topk_err = 0.0
-        #
-        #     for batch_num, (inputs, labels) in enumerate(loader, 1):
-        #         inputs = inputs.to(device)
-        #         labels = labels.to(device)
-        #         outputs = model(inputs)
-        #
-        #         _,cls = torch.topk(outputs,dim=1,k=k)
-        #         batch_topk_err = (1 - (cls.numel()-torch.nonzero(cls-labels.view(-1,1)).shape[0])/labels.numel())
-        #         epoch_topk_err = epoch_topk_err * ((batch_num-1) / batch_num) \
-        #                         + batch_topk_err / batch_num
-        #
-        #         if batch_num % output_period == 0:
-        #             # print('[%d:%.2f] %s_Topk_error: %.3f' % (
-        #             #     epoch,
-        #             #     batch_num*1.0/num_val_batches,
-        #             #     name,
-        #             #     epoch_topk_err/batch_num
-        #             # ))
-        #             gc.collect()
-        #
-        #
-        #     return epoch_topk_err
+                # lr_imgs = 7 * 4 * 3 * H * W
+                cnt = 0
+                for lr_img, hr_img in zip(lr_imgs, hr_imgs):
+                    # print(lr_img.shape)
+                    hr_est, lr_est = model(lr_img)
+                    content_loss = content_criterion(hr_est, hr_img)
+                    flow_loss = torch.mean((lr_img - lr_est) ** 2)
+                    # flow_loss = ssim_loss(lr_img, lr_est)
+                    # print(f'content_loss is {content_loss}, flow_loss is {flow_loss}')
+                    batch_content_loss += content_loss
+                    if cnt > 0:
+                        batch_flow_loss += flow_loss
+                    cnt += 1
+                output_period += 1
+                running_loss += batch_content_loss + batch_flow_loss
+
+            print('[%d] avg val loss: %.3f' % (
+                epoch,
+                running_loss / output_period
+            ), file=sys.stderr)
 
         gc.collect()
         epoch += 1

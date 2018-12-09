@@ -154,8 +154,8 @@ def get_data_loaders(batch, shuffle_dataset=True, dataset_size=0, validation_spl
     valid_sampler = SubsetRandomSampler(val_indices)
     print("Validation sample numbers: ", len(valid_sampler))
 
-    train_loader = torch.utils.data.DataLoader(FRData, batch_size=batch, sampler=train_sampler)
-    validation_loader = torch.utils.data.DataLoader(FRData, batch_size=batch, sampler=valid_sampler)
+    train_loader = torch.utils.data.DataLoader(FRData, batch_size=batch, sampler=train_sampler, drop_last=True)
+    validation_loader = torch.utils.data.DataLoader(FRData, batch_size=batch, sampler=valid_sampler, drop_last=True)
     train_loader = loader_wrapper(train_loader)
     validation_loader = loader_wrapper(validation_loader)
 
