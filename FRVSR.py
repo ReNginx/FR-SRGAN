@@ -241,6 +241,32 @@ class Loss(nn.Module):
         return image_loss + 0.006 * perception_loss + 2e-8 * tv_loss
 
 
+class GeneratorLoss(nn.Module):
+    def __init__(self):
+        super(GeneratorLoss, self).__init__()
+        vgg = vgg16(pretrained=True)
+        loss_network = nn.Sequential(*list(vgg.features)[:31]).eval()
+        for param in loss_network.parameters():
+            param.requires_grad = False
+        self.loss_network = loss_network
+        self.mse_loss = nn.MSELoss()
+        self.tv_loss = TVLoss()
+
+    def forward(self, out_labels, hr_est, hr_img, lr_est, lr_img):
+        # Adversarial Loss
+        adversarial_loss = torch.mean(1 - out_labels)
+        # Perception Loss
+        perception_loss = self.mse_loss(self.loss_network(hr_est), self.loss_network(hr_img))
+        # Image Loss
+        image_loss = self.mse_loss(hr_est, hr_img)
+        # TV Loss
+        tv_loss = self.tv_loss(hr_est)
+        # flow loss
+        flow_loss = self.mse_loss(lr_est, lr_img)
+
+        return image_loss + 0.001 * adversarial_loss + 0.006 * perception_loss + 2e-8 * tv_loss + 0.5 * flow_loss
+
+
 class TVLoss(nn.Module):
     def __init__(self, tv_loss_weight=1):
         super(TVLoss, self).__init__()
