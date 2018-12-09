@@ -9,7 +9,7 @@ import torchvision.utils as utils
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import Dataset
+import Dataset_OnlyHR
 from FRVSR import FRVSR
 
 from SRGAN.data_utils import TrainDatasetFromFolder, ValDatasetFromFolder, display_transform
@@ -36,7 +36,7 @@ dataset_size = opt.dataset_size
 # train_loader = DataLoader(dataset=train_set, num_workers=4, batch_size=64, shuffle=True)
 # val_loader = DataLoader(dataset=val_set, num_workers=4, batch_size=1, shuffle=False)
 
-train_loader, val_loader = Dataset.get_data_loaders(batch_size, dataset_size=dataset_size, validation_split=0.2)
+train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(batch_size, dataset_size=dataset_size, validation_split=0.2)
 num_train_batches = len(train_loader)
 num_val_batches = len(val_loader)
 
