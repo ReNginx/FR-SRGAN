@@ -9,11 +9,17 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor, ToPILImage
-import Dataset
+import Dataset_OnlyHR
 import FRVSR
 from skimage import img_as_ubyte
-from skimage import img_as_float32
+from skimage.util import img_as_float32
 
+
+def trunc(tensor):
+    # tensor = tensor.clone()
+    tensor[tensor < 0] = 0
+    tensor[tensor > 1] = 1
+    return tensor
 
 def test_optic_flow(frame1, frame2):
     # im1 = img_as_ubyte(frame1)
@@ -60,25 +66,40 @@ def test_optic_flow(frame1, frame2):
     # cap.release()
     # cv2.destroyAllWindows()
 
+
+import math
+
+
+def psnr(img1, img2):
+    # print(img1.size())
+    mse = torch.mean((img1 - img2) ** 2)
+    if mse == 0:
+        return 100
+    PIXEL_MAX = 1.0
+    return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test Single Video')
-    parser.add_argument('--model', default='./models/FRVSR.XS', type=str, help='generator model epoch name')
+    parser.add_argument('--model', default='./models/FRVSR.1', type=str, help='generator model epoch name')
     opt = parser.parse_args()
 
     UPSCALE_FACTOR = 4
     MODEL_NAME = opt.model
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = FRVSR.FRVSR(0, 0, 0).eval()
+    model = FRVSR.FRVSR(0, 0, 0)
     model.to(device)
 
     # for cpu
     # model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage))
-    model.load_state_dict(torch.load(MODEL_NAME, device))
-    model.eval()
+    checkpoint = torch.load(MODEL_NAME, map_location='cpu')
+    model.load_state_dict(checkpoint)
+    model.train()
 
-    train_loader, val_loader = Dataset.get_data_loaders(1, dataset_size=4)
-    for lr_example, hr_example in train_loader:
+    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=4, validation_split=1,
+                                                               shuffle_dataset=True)
+    out_psnr = 0
+    for lr_example, hr_example in val_loader:
         fps = 24
         frame_numbers = 7
         # frame_numbers = 100
@@ -120,12 +141,40 @@ if __name__ == "__main__":
             hr_out, lr_out = model(image)
             hr_out = hr_out.clone()
             lr_out = lr_out.clone()
+            # plt.imshow(hr_out[0].permute(1,2,0).detach().numpy())
+            # plt.imshow(truth[0].permute(1,2,0).clone().numpy())
+            # plt.show()
+            print(image.shape)
+            print(lr_out.shape)
+            l1 = torch.mean((truth - hr_out) ** 2)
+            l2 = torch.mean((image - lr_out) ** 2)
+            print(l1)
+            print(l2)
+            # print(lr_out)
+            # # print(image)
+            hr_out = Dataset_OnlyHR.inverse_transform(hr_out.clone())
+            lr_out = Dataset_OnlyHR.inverse_transform(lr_out.clone())
+            image = Dataset_OnlyHR.inverse_transform(image.clone())
+            truth = Dataset_OnlyHR.inverse_transform(truth.clone())
+            hr_out = trunc(hr_out.clone())
+            lr_out = trunc(lr_out.clone())
             aw_out = model.afterWarp.clone()
+
+            out_psnr += psnr(hr_out, truth)
+            l1 = torch.mean((truth - hr_out) ** 2)
+            l2 = torch.mean((image - lr_out) ** 2)
+            print(l1)
+            print(l2)
+
+            plt.imshow(hr_out[0].permute(1, 2, 0).detach().numpy())
+            # plt.imshow(truth[0].permute(1,2,0).clone().numpy())
+            # plt.imshow(lr_out[0].permute(1, 2, 0).detach().numpy())
+            plt.show()
 
 
             # model.init_hidden(device)
             def output(out, writer):
-                out = out.cpu()
+                out = out.clone()
                 out_img = out.data[0].numpy()
                 out_img *= 255.0
                 out_img = (np.uint8(out_img)).transpose((1, 2, 0))
@@ -142,4 +191,5 @@ if __name__ == "__main__":
         lr_video_writer.release()
         aw_video_writer.release()
         gt_video_writer.release()
+        print(f"pnsr is {out_psnr / 7}")
         break
