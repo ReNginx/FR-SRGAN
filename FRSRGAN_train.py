@@ -2,6 +2,7 @@ import argparse
 import os
 from math import log10
 
+import gc
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data
@@ -137,6 +138,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
             running_results['g_loss'] / running_results['batch_sizes'],
             running_results['d_score'] / running_results['batch_sizes'],
             running_results['g_score'] / running_results['batch_sizes']))
+        gc.collect()
 
     netG.eval()
     # out_path = 'training_results/SRF_' + str(UPSCALE_FACTOR) + '/'
@@ -170,6 +172,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         val_bar.set_description(
             desc='[converting LR images to SR images] PSNR: %.4f dB SSIM: %.4f' % (
                 valing_results['psnr'], valing_results['ssim']))
+        gc.collect()
 
     #     val_images.extend(
     #         [display_transform()(val_hr_restore.squeeze(0)), display_transform()(hr.data.cpu().squeeze(0)),
