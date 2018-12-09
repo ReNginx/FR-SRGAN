@@ -264,7 +264,7 @@ class GeneratorLoss(nn.Module):
         # flow loss
         flow_loss = self.mse_loss(lr_est, lr_img)
 
-        return image_loss + 0.001 * adversarial_loss + 0.006 * perception_loss + 2e-8 * tv_loss + 0.01 * flow_loss
+        return image_loss + 0.001 * adversarial_loss + 0.006 * perception_loss + 2e-8 * tv_loss + 0.0001 * flow_loss
 
 
 class TVLoss(nn.Module):

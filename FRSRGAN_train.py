@@ -19,12 +19,12 @@ import SRGAN.pytorch_ssim as pts
 
 parser = argparse.ArgumentParser(description='Train Super Resolution Models')
 
-parser.add_argument('--num_epochs', default=25, type=int, help='train epoch number')
+parser.add_argument('--num_epochs', default=1000, type=int, help='train epoch number')
 parser.add_argument('--width', default=112, type=int, help='lr pic width')
 parser.add_argument('--height', default=64, type=int, help='lr pic height')
 parser.add_argument('--dataset_size', default=0, type=int, help='dataset_size, 0 to use all')
 parser.add_argument('--batch_size', default=4, type=int, help='batch_size, default 4')
-parser.add_argument('--lr', default=1e-5, type=float, help='batch_size, default 4')
+parser.add_argument('--lr', default=1e-5, type=float, help='learning rate, default 1e-5')
 opt = parser.parse_args()
 
 UPSCALE_FACTOR = 4
