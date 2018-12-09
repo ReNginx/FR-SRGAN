@@ -110,6 +110,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         ###########################
         g_loss = 0
         netG.zero_grad()
+        idx = 0
         for fake_hr, fake_lr, fake_scr, hr_img, lr_img \
                 in zip(fake_hrs, fake_lrs, fake_scrs, target, data):
             fake_hr = fake_hr.to(device)
@@ -117,7 +118,8 @@ for epoch in range(1, NUM_EPOCHS + 1):
             fake_scr = fake_scr.to(device)
             hr_img = hr_img.to(device)
             lr_img = lr_img.to(device)
-            g_loss += generator_criterion(fake_scr, fake_hr, hr_img, fake_lr, lr_img)
+            g_loss += generator_criterion(fake_scr, fake_hr, hr_img, fake_lr, lr_img, idx)
+            idx += 1
 
         g_loss /= len(data)
         g_loss.backward()
