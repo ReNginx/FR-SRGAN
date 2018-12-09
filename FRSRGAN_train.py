@@ -22,14 +22,15 @@ parser = argparse.ArgumentParser(description='Train Super Resolution Models')
 parser.add_argument('--num_epochs', default=25, type=int, help='train epoch number')
 parser.add_argument('--width', default=112, type=int, help='lr pic width')
 parser.add_argument('--height', default=64, type=int, help='lr pic height')
-parser.add_argument('--dataset_size', default=0, type=int, help='lr pic height')
+parser.add_argument('--dataset_size', default=0, type=int, help='dataset_size, 0 to use all')
+parser.add_argument('--batch_size', default=4, type=int, help='batch_size, default 4')
 opt = parser.parse_args()
 
 UPSCALE_FACTOR = 4
 NUM_EPOCHS = opt.num_epochs
 WIDTH = opt.width
 HEIGHT = opt.height
-batch_size = 4
+batch_size = opt.batch_size
 dataset_size = opt.dataset_size
 # train_set = TrainDatasetFromFolder('data/VOC2012/train', crop_size=CROP_SIZE, upscale_factor=UPSCALE_FACTOR)
 # val_set = ValDatasetFromFolder('data/VOC2012/val', upscale_factor=UPSCALE_FACTOR)
