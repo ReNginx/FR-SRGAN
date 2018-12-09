@@ -82,9 +82,9 @@ for epoch in range(1, NUM_EPOCHS + 1):
         netG.init_hidden(device)
 
         for lr_img, hr_img in zip(data, target):
-            #if torch.cuda.is_available():
+            # if torch.cuda.is_available():
             hr_img = hr_img.to(device)
-            #if torch.cuda.is_available():
+            # if torch.cuda.is_available():
             lr_img = lr_img.to(device)
 
             fake_hr, fake_lr = netG(lr_img)
@@ -146,15 +146,20 @@ for epoch in range(1, NUM_EPOCHS + 1):
         valing_results['batch_sizes'] += batch_size
 
         netG.init_hidden(device)
+
+        batch_mse = []
+        batch_ssim = []
         for lr, hr in zip(val_lr, val_hr):
             lr = lr.to(device)
             hr = hr.to(device)
 
             hr_est, lr_est = netG(lr)
+            batch_mse.append(((hr_est - hr) ** 2).data.mean())
+            batch_ssim.append(pts.ssim(hr_est, hr).data[0])
 
-        batch_mse = ((hr_est - hr) ** 2).data.mean()
+        batch_mse = torch.Tensor(batch_mse).mean()
         valing_results['mse'] += batch_mse * batch_size
-        batch_ssim = pts.ssim(hr_est, hr).data[0]
+        batch_ssim = torch.Tensor(batch_ssim).mean()
         valing_results['ssims'] += batch_ssim * batch_size
         valing_results['psnr'] = 10 * log10(1 / (valing_results['mse'] / valing_results['batch_sizes']))
         valing_results['ssim'] = valing_results['ssims'] / valing_results['batch_sizes']
