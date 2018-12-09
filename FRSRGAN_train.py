@@ -155,7 +155,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
 
             hr_est, lr_est = netG(lr)
             batch_mse.append(((hr_est - hr) ** 2).data.mean())
-            batch_ssim.append(pts.ssim(hr_est, hr).data[0])
+            batch_ssim.append(pts.ssim(hr_est, hr).item())
 
         batch_mse = torch.Tensor(batch_mse).mean()
         valing_results['mse'] += batch_mse * batch_size
