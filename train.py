@@ -29,7 +29,7 @@ def run():
     num_epochs = 25
     output_period = 10
     batch_size = 4
-    width, height = 64, 64
+    width, height = 112, 64
 
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
