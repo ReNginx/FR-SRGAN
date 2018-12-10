@@ -146,7 +146,7 @@ def run():
 
         out_path = 'statistics/'
         data_frame = pd.DataFrame(
-            data={'train_Loss': epoch_train_loss.clone(), 'valid_Loss': epoch_valid_loss.clone()},
+            data={'train_Loss': epoch_train_loss, 'valid_Loss': epoch_valid_loss},
             index=range(1, epoch + 1))
         data_frame.to_csv(out_path + 'frvsr_' + str(4) + '_train_results.csv', index_label='Epoch')
 
