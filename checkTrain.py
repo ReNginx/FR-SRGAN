@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage))
     checkpoint = torch.load(MODEL_NAME, map_location='cpu')
     model.load_state_dict(checkpoint)
-    model.train()
+    model.eval()
 
     train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=400, validation_split=1,
                                                                shuffle_dataset=True)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         output_lr_name = 'out_srf_' + 'original' + '_' + 'random_sample.mp4'
         output_aw_name = 'out_srf_' + 'warp' + '_' + 'random_sample.mp4'
 
-        fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+        fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', 'V')
         hr_video_writer = cv2.VideoWriter(output_sr_name, fourcc, fps, hr_video_size)
         lr_video_writer = cv2.VideoWriter(output_lr_name, fourcc, fps, lr_video_size)
         aw_video_writer = cv2.VideoWriter(output_aw_name, fourcc, fps, hr_video_size)

@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler
+import pandas as pd
 
 from SRGAN import pytorch_ssim
 
@@ -49,6 +50,8 @@ def run():
 
     epoch = 1
     while epoch <= num_epochs:
+        epoch_train_loss = 0.0
+        epoch_valid_loss = 0.0
         running_loss = 0.0
         for param_group in optimizer.param_groups:
             print('Current learning rate: ' + str(param_group['lr']))
@@ -91,6 +94,7 @@ def run():
             # print("success")
             optimizer.step()
             running_loss += loss.item()
+            epoch_train_loss = (epoch_train_loss * (batch_num - 1) + loss.item()) / batch_num
 
             if batch_num % output_period == 0:
                 print('[%d:%.2f] loss: %.3f' % (
@@ -129,7 +133,9 @@ def run():
                         batch_flow_loss += flow_loss
                     cnt += 1
                 output_period += 1
-                running_loss += batch_content_loss + batch_flow_loss
+                loss = batch_content_loss + batch_flow_loss
+                running_loss += loss
+                epoch_train_loss = (epoch_train_loss * (batch_num - 1) + loss) / batch_num
 
             print('[%d] avg val loss: %.3f' % (
                 epoch,
@@ -137,6 +143,13 @@ def run():
             ), file=sys.stderr)
 
         gc.collect()
+
+        out_path = 'statistics/'
+        data_frame = pd.DataFrame(
+            data={'train_Loss': epoch_train_loss, 'valid_Loss': epoch_valid_loss},
+            index=range(1, epoch + 1))
+        data_frame.to_csv(out_path + 'frvsr_' + str(4) + '_train_results.csv', index_label='Epoch')
+
         epoch += 1
 
 
