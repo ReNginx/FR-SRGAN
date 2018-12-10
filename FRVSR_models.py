@@ -68,7 +68,7 @@ class SRNet(nn.Module):
         self.deconv2 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3,
                                           stride=2, padding=1, output_padding=1)
         self.outputConv = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, stride=1, padding=1)
-        self.dropout = nn.Dropout(p = 0.5)
+        # self.dropout = nn.Dropout(p = 0.5)
 
     def forward(self, input):
         out = self.inputConv(input)
@@ -78,7 +78,7 @@ class SRNet(nn.Module):
         out = self.deconv2(out)
         out = func.relu(out)
         out = self.outputConv(out)
-        out = self.dropout(out)
+        #out = self.dropout(out)
         return out
 
 
