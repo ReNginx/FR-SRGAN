@@ -31,6 +31,8 @@ def run():
     batch_size = 4
     width, height = 112, 64
 
+    epoch_train_losses = []
+    epoch_valid_losses = []
     # setup the device for running
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = load_model('', batch_size, width, height)
@@ -144,9 +146,12 @@ def run():
 
         gc.collect()
 
+        epoch_train_losses.append(epoch_train_loss)
+        epoch_valid_losses.append(epoch_valid_loss)
+
         out_path = 'statistics/'
         data_frame = pd.DataFrame(
-            data={'train_Loss': epoch_train_loss, 'valid_Loss': epoch_valid_loss},
+            data={'train_Loss': epoch_train_losses, 'valid_Loss': epoch_valid_losses},
             index=range(1, epoch + 1))
         data_frame.to_csv(out_path + 'frvsr_' + str(4) + '_train_results.csv', index_label='Epoch')
 
