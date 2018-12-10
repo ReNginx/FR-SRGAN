@@ -135,7 +135,7 @@ def run():
                 output_period += 1
                 loss = batch_content_loss + batch_flow_loss
                 running_loss += loss
-                epoch_train_loss = (epoch_train_loss * (batch_num - 1) + loss) / batch_num
+                epoch_valid_loss = (epoch_valid_loss * (batch_num - 1) + loss) / batch_num
 
             print('[%d] avg val loss: %.3f' % (
                 epoch,
