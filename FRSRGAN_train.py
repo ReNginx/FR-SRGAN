@@ -24,7 +24,7 @@ parser.add_argument('--num_epochs', default=1000, type=int, help='train epoch nu
 parser.add_argument('--width', default=112, type=int, help='lr pic width')
 parser.add_argument('--height', default=64, type=int, help='lr pic height')
 parser.add_argument('--dataset_size', default=0, type=int, help='dataset_size, 0 to use all')
-parser.add_argument('--batch_size', default=4, type=int, help='batch_size, default 4')
+parser.add_argument('--batch_size', default=2, type=int, help='batch_size, default 2')
 parser.add_argument('--lr', default=1e-5, type=float, help='learning rate, default 1e-5')
 opt = parser.parse_args()
 
@@ -197,7 +197,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
     results['psnr'].append(valing_results['psnr'])
     results['ssim'].append(valing_results['ssim'])
 
-    if epoch % 10 == 0 and epoch != 0:
+    if epoch % 1 == 0 and epoch != 0:
         out_path = 'statistics/'
         data_frame = pd.DataFrame(
             data={'Loss_D': results['d_loss'], 'Loss_G': results['g_loss'], 'Score_D': results['d_score'],
