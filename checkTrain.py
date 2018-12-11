@@ -96,11 +96,13 @@ if __name__ == "__main__":
     model.load_state_dict(checkpoint)
     model.eval()
 
-    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=400, validation_split=1,
+    train_loader, val_loader = Dataset_OnlyHR.get_data_loaders(1, dataset_size=0, validation_split=1,
                                                                shuffle_dataset=True)
-    out_psnr = 0
-    for lr_example, hr_example in val_loader:
-        fps = 24
+
+    tot_psnr = 0
+    for idx, (lr_example, hr_example) in enumerate(val_loader, 1):
+        out_psnr = 0
+        fps = 6
         frame_numbers = 7
         # frame_numbers = 100
         lr_width = lr_example.shape[4]
@@ -112,8 +114,8 @@ if __name__ == "__main__":
                          lr_height * UPSCALE_FACTOR)
         lr_video_size = (lr_width, lr_height)
 
-        output_sr_name = 'out_srf_' + str(UPSCALE_FACTOR) + '_' + 'random_sample.mp4'
-        output_gt_name = 'out_srf_' + 'groundtruth' + '_' + 'random_sample.mp4'
+        output_sr_name = 'out_srf_' + str(UPSCALE_FACTOR) + f'_{idx}_' + 'random_sample.mp4'
+        output_gt_name = 'out_srf_' + 'groundtruth' + f'_{idx}_' + 'random_sample.mp4'
         output_lr_name = 'out_srf_' + 'original' + '_' + 'random_sample.mp4'
         output_aw_name = 'out_srf_' + 'warp' + '_' + 'random_sample.mp4'
 
@@ -140,7 +142,7 @@ if __name__ == "__main__":
 
             hr_out, lr_out = model(image)
             hr_out = hr_out.clone()
-            lr_out = lr_out.clone()
+            lr_out = image.clone()
             # plt.imshow(hr_out[0].permute(1,2,0).detach().numpy())
             # plt.imshow(truth[0].permute(1,2,0).clone().numpy())
             # plt.show()
@@ -158,7 +160,7 @@ if __name__ == "__main__":
             # truth = Dataset_OnlyHR.inverse_transform(truth.clone())
             hr_out = trunc(hr_out.clone())
             lr_out = trunc(lr_out.clone())
-            aw_out = model.afterWarp.clone()
+            aw_out = trunc(model.afterWarp.clone())
 
             out_psnr += psnr(hr_out, truth)
             l1 = torch.mean((truth - hr_out) ** 2)
@@ -166,9 +168,9 @@ if __name__ == "__main__":
             print(l1)
             print(l2)
 
-            plt.imshow(hr_out[0].permute(1, 2, 0).detach().numpy())
+            # plt.imshow(hr_out[0].permute(1, 2, 0).detach().numpy())
             # plt.imshow(truth[0].permute(1,2,0).clone().numpy())
-            # plt.imshow(lr_out[0].permute(1, 2, 0).detach().numpy())
+            plt.imshow(lr_out[0].permute(1, 2, 0).detach().numpy())
             plt.show()
 
 
@@ -178,6 +180,7 @@ if __name__ == "__main__":
                 out_img = out.data[0].numpy()
                 out_img *= 255.0
                 out_img = (np.uint8(out_img)).transpose((1, 2, 0))
+                out_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2RGB)
                 # save sr video
                 writer.write(out_img)
 
@@ -192,4 +195,6 @@ if __name__ == "__main__":
         aw_video_writer.release()
         gt_video_writer.release()
         print(f"pnsr is {out_psnr / 7}")
+        tot_psnr = (tot_psnr * (idx - 1) + out_psnr / 7) / idx
         break
+    print(f"avg psnr is {tot_psnr}")
