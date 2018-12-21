@@ -58,7 +58,7 @@ The following results are produced by 7-epoch model.
 
 
 ### Comparison
-[![FrjF9s.md.gif](https://s1.ax1x.com/2018/12/21/FrjF9s.md.gif)](https://imgchr.com/i/FrjF9s)
+[![Frxiyq.gif](https://s1.ax1x.com/2018/12/21/Frxiyq.gif)](https://imgchr.com/i/Frxiyq)
 
 ## Acknowledgement
 
