@@ -21,9 +21,11 @@ TODO
 This project is based on the following two papers.
 
 > Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network 
+>
 > https://arxiv.org/abs/1609.04802
 >
 > Frame-Recurrent Video Super-Resolution 
+>
 > https://arxiv.org/abs/1801.04590
 
 We are trying to combine these two models together in our project (this is the where the name come from "Frame Recurrent Super Resolution GAN").
