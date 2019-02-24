@@ -31,7 +31,7 @@ This project is based on the following two papers.
 We are trying to combine these two models together in our project (this is the where the name come from "Frame Recurrent Super Resolution GAN").
 
 Our final report is available here:
-https://drive.google.com/file/d/19NxecT98x1ULJFUWGGqmW4E2dadhvC0D/view?usp=sharing
+[Report](https://drive.google.com/file/d/19NxecT98x1ULJFUWGGqmW4E2dadhvC0D/view?usp=sharing)
 
 ## Dataset
 
