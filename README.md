@@ -30,6 +30,9 @@ This project is based on the following two papers.
 
 We are trying to combine these two models together in our project (this is the where the name come from "Frame Recurrent Super Resolution GAN").
 
+Our final report is available here:
+https://drive.google.com/file/d/19NxecT98x1ULJFUWGGqmW4E2dadhvC0D/view?usp=sharing
+
 ## Dataset
 
 We used the dataset from [toflow-dataset](http://data.csail.mit.edu/tofu/testset/vimeo_test_clean.zip), which is about 15GB, containing 7.8k video clips with 7 frames per clip.
